@@ -10,9 +10,20 @@ type Student = {
   phone: string;
 };
 
+type Teacher = {
+  id: number;
+  name: string;
+  phone: string;
+};
+
 export default function Index() {
   const [activeSection, setActiveSection] = useState<'home' | 'news' | 'contacts'>('home');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const teachers: Teacher[] = [
+    { id: 1, name: 'Лариса Николаевна', phone: '+7 917 528-32-06' },
+    { id: 2, name: 'Оксана Владимировна', phone: '+7 903 506-52-18' }
+  ];
 
   const students: Student[] = [
     { id: 1, name: 'Жанер', phone: '+7 926 288-38-77' },
@@ -156,6 +167,36 @@ export default function Index() {
                 </p>
               </div>
 
+              <div>
+                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Icon name="GraduationCap" size={24} className="text-primary" />
+                  Учителя
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4 mb-8">
+                  {teachers.map((teacher, index) => (
+                    <Card key={teacher.id} className="bg-gradient-to-br from-primary/5 to-primary/10 backdrop-blur-sm border-primary/30 hover:border-primary/50 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
+                      <CardContent className="p-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                            <Icon name="GraduationCap" size={24} className="text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-lg mb-1 truncate">{teacher.name}</h3>
+                            <a 
+                              href={`tel:${teacher.phone}`}
+                              className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
+                            >
+                              <Icon name="Phone" size={16} />
+                              <span className="text-sm">{teacher.phone}</span>
+                            </a>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
               <div className="relative">
                 <Icon name="Search" size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -166,8 +207,13 @@ export default function Index() {
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                {filteredStudents.map((student, index) => (
+              <div>
+                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Icon name="Users" size={24} className="text-primary" />
+                  Ученики
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {filteredStudents.map((student, index) => (
                   <Card key={student.id} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
                     <CardContent className="p-5">
                       <div className="flex items-center gap-4">
@@ -187,7 +233,8 @@ export default function Index() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  ))}
+                </div>
               </div>
 
               {filteredStudents.length === 0 && (
