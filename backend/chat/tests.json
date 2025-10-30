@@ -1,0 +1,27 @@
+{
+  "tests": [
+    {
+      "name": "Get messages list",
+      "method": "GET",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "messages": []
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Send new message",
+      "method": "POST",
+      "body": {
+        "userId": 1,
+        "username": "testuser",
+        "message": "Hello from test"
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

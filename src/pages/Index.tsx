@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import AuthModal from '@/components/AuthModal';
+import ChatRoom from '@/components/ChatRoom';
 
 type Student = {
   id: number;
@@ -33,8 +35,47 @@ type DaySchedule = {
 };
 
 export default function Index() {
-  const [activeSection, setActiveSection] = useState<'home' | 'schedule' | 'news' | 'contacts'>('home');
+  const [activeSection, setActiveSection] = useState<'home' | 'schedule' | 'news' | 'contacts' | 'chat'>('home');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [username, setUsername] = useState<string>('');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    const storedUsername = localStorage.getItem('username');
+    if (storedUserId && storedUsername) {
+      setUserId(parseInt(storedUserId));
+      setUsername(storedUsername);
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleAuthSuccess = (newUserId: number, newUsername: string) => {
+    setUserId(newUserId);
+    setUsername(newUsername);
+    setIsAuthenticated(true);
+    setShowAuthModal(false);
+    setActiveSection('chat');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('userId');
+    localStorage.removeItem('username');
+    setUserId(null);
+    setUsername('');
+    setIsAuthenticated(false);
+    setActiveSection('home');
+  };
+
+  const handleChatClick = () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+    } else {
+      setActiveSection('chat');
+    }
+  };
 
   const admins: Admin[] = [
     { id: 1, name: 'Дмитрий Скороваров', phone: '+7 991 653 23 46' }
@@ -152,15 +193,16 @@ export default function Index() {
             </h1>
             <div className="flex gap-6">
               {[
-                { id: 'home', label: 'Главная', icon: 'Home' },
-                { id: 'schedule', label: 'Расписание', icon: 'Calendar' },
-                { id: 'news', label: 'Новости', icon: 'Newspaper' },
-                { id: 'contacts', label: 'Контакты', icon: 'Users' }
+                { id: 'home', label: 'Главная', icon: 'Home', onClick: () => setActiveSection('home') },
+                { id: 'schedule', label: 'Расписание', icon: 'Calendar', onClick: () => setActiveSection('schedule') },
+                { id: 'chat', label: 'Чат', icon: 'MessageCircle', onClick: handleChatClick },
+                { id: 'news', label: 'Новости', icon: 'Newspaper', onClick: () => setActiveSection('news') },
+                { id: 'contacts', label: 'Контакты', icon: 'Users', onClick: () => setActiveSection('contacts') }
               ].map((item) => (
                 <Button
                   key={item.id}
                   variant={activeSection === item.id ? 'default' : 'ghost'}
-                  onClick={() => setActiveSection(item.id as typeof activeSection)}
+                  onClick={item.onClick}
                   className="flex items-center gap-2 transition-all hover:scale-105"
                 >
                   <Icon name={item.icon as any} size={18} />
@@ -223,6 +265,10 @@ export default function Index() {
               ))}
             </section>
           </div>
+        )}
+
+        {activeSection === 'chat' && isAuthenticated && userId && (
+          <ChatRoom userId={userId} username={username} onLogout={handleLogout} />
         )}
 
         {activeSection === 'schedule' && (
@@ -432,6 +478,8 @@ export default function Index() {
           <p>© 2025 5У. Все права защищены.</p>
         </div>
       </footer>
+
+      {showAuthModal && <AuthModal onSuccess={handleAuthSuccess} />}
     </div>
   );
 }
