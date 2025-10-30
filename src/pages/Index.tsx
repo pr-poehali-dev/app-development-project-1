@@ -226,7 +226,7 @@ export default function Index() {
 
                 <div className="space-y-4">
                   {[
-                    { icon: 'Mail', label: 'Email', value: 'info@5u.example.com' },
+                    { icon: 'Mail', label: 'Email', value: 'skorovarovd2014@gmail.com' },
                     { icon: 'Phone', label: 'Телефон', value: '+7 (XXX) XXX-XX-XX' },
                     { icon: 'MapPin', label: 'Адрес', value: 'г. Москва, ул. Примерная, д. 1' },
                     { icon: 'Clock', label: 'Время работы', value: 'Пн-Пт: 9:00 - 18:00' }
