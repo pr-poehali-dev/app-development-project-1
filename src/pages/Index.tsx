@@ -103,7 +103,7 @@ export default function Index() {
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                 Контакты учеников и последние новости класса
               </p>
-              <div className="flex gap-4 justify-center pt-8">
+              <div className="flex flex-wrap gap-4 justify-center pt-8">
                 <Button size="lg" onClick={() => setActiveSection('contacts')} className="hover:scale-105 transition-transform">
                   <Icon name="Users" size={20} className="mr-2" />
                   Контакты учеников
@@ -111,6 +111,17 @@ export default function Index() {
                 <Button size="lg" variant="outline" onClick={() => setActiveSection('news')} className="hover:scale-105 transition-transform">
                   <Icon name="Newspaper" size={20} className="mr-2" />
                   Читать новости
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="default"
+                  asChild
+                  className="bg-[#25D366] hover:bg-[#20BD5C] text-white hover:scale-105 transition-transform"
+                >
+                  <a href="https://chat.whatsapp.com/HfGjH0oP5BTDfsfD1vzElG?mode=wwt" target="_blank" rel="noopener noreferrer">
+                    <Icon name="MessageCircle" size={20} className="mr-2" />
+                    Чат класса в WhatsApp
+                  </a>
                 </Button>
               </div>
             </section>
