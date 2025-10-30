@@ -3,45 +3,29 @@ import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
-type Message = {
+type Student = {
   id: number;
-  text: string;
-  sender: 'user' | 'support';
-  timestamp: Date;
+  name: string;
+  phone: string;
 };
 
 export default function Index() {
-  const [activeSection, setActiveSection] = useState<'home' | 'chat' | 'news' | 'contacts'>('home');
-  const [messages, setMessages] = useState<Message[]>([
-    { id: 1, text: 'Здравствуйте! Чем могу помочь?', sender: 'support', timestamp: new Date() }
-  ]);
-  const [inputMessage, setInputMessage] = useState('');
+  const [activeSection, setActiveSection] = useState<'home' | 'news' | 'contacts'>('home');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const sendMessage = () => {
-    if (!inputMessage.trim()) return;
-
-    const newMessage: Message = {
-      id: messages.length + 1,
-      text: inputMessage,
-      sender: 'user',
-      timestamp: new Date()
-    };
-
-    setMessages([...messages, newMessage]);
-    setInputMessage('');
-
-    setTimeout(() => {
-      const supportMessage: Message = {
-        id: messages.length + 2,
-        text: 'Спасибо за ваше сообщение! Наш специалист ответит в ближайшее время.',
-        sender: 'support',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, supportMessage]);
-    }, 1000);
-  };
+  const students: Student[] = [
+    { id: 1, name: 'Жанер', phone: '+7 926 288-38-77' },
+    { id: 2, name: 'Алексей Гусев', phone: '+7 969 088-06-74' },
+    { id: 3, name: 'Ваня Левашов', phone: '+7 967 207-03-00' },
+    { id: 4, name: 'Акопян Артем', phone: '+7 917 565-09-85' },
+    { id: 5, name: 'Арина Автономова', phone: '+7 926 893-02-05' },
+    { id: 6, name: 'Дима Селезнев', phone: '+7 977 899-79-37' },
+    { id: 7, name: 'Катя Зубова', phone: '+7 985 168-66-26' },
+    { id: 8, name: 'РАДИОНОВ Матвей', phone: '+7 985 192-79-50' },
+    { id: 9, name: 'Терехов Матвей', phone: '+7 915 325-57-67' },
+    { id: 10, name: 'Оля Кормилицина', phone: '+7 985 577-70-04' }
+  ];
 
   const newsItems = [
     {
@@ -52,9 +36,9 @@ export default function Index() {
     },
     {
       id: 2,
-      title: 'Новые возможности чата',
-      description: 'Добавлена поддержка файлов и эмодзи в реальном времени',
-      date: '25 октября 2025'
+      title: 'Новые контакты',
+      description: 'Добавлены контакты всех учеников для удобной связи',
+      date: '30 октября 2025'
     },
     {
       id: 3,
@@ -63,6 +47,11 @@ export default function Index() {
       date: '20 октября 2025'
     }
   ];
+
+  const filteredStudents = students.filter(student =>
+    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    student.phone.includes(searchQuery)
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#2a2a2a]">
@@ -75,9 +64,8 @@ export default function Index() {
             <div className="flex gap-6">
               {[
                 { id: 'home', label: 'Главная', icon: 'Home' },
-                { id: 'chat', label: 'Чат', icon: 'MessageCircle' },
                 { id: 'news', label: 'Новости', icon: 'Newspaper' },
-                { id: 'contacts', label: 'Контакты', icon: 'Mail' }
+                { id: 'contacts', label: 'Контакты учеников', icon: 'Users' }
               ].map((item) => (
                 <Button
                   key={item.id}
@@ -102,12 +90,12 @@ export default function Index() {
                 Добро пожаловать в 5У
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Современная платформа для общения и обмена информацией
+                Контакты учеников и последние новости класса
               </p>
               <div className="flex gap-4 justify-center pt-8">
-                <Button size="lg" onClick={() => setActiveSection('chat')} className="hover:scale-105 transition-transform">
-                  <Icon name="MessageCircle" size={20} className="mr-2" />
-                  Начать общение
+                <Button size="lg" onClick={() => setActiveSection('contacts')} className="hover:scale-105 transition-transform">
+                  <Icon name="Users" size={20} className="mr-2" />
+                  Контакты учеников
                 </Button>
                 <Button size="lg" variant="outline" onClick={() => setActiveSection('news')} className="hover:scale-105 transition-transform">
                   <Icon name="Newspaper" size={20} className="mr-2" />
@@ -118,9 +106,9 @@ export default function Index() {
 
             <section className="grid md:grid-cols-3 gap-6">
               {[
-                { icon: 'Zap', title: 'Быстро', desc: 'Мгновенная отправка сообщений' },
-                { icon: 'Shield', title: 'Безопасно', desc: 'Защита данных на всех уровнях' },
-                { icon: 'Users', title: 'Удобно', desc: 'Интуитивный интерфейс для всех' }
+                { icon: 'Users', title: 'Контакты', desc: 'Все номера учеников в одном месте' },
+                { icon: 'Search', title: 'Удобный поиск', desc: 'Быстро найдите нужный контакт' },
+                { icon: 'Newspaper', title: 'Новости', desc: 'Актуальная информация о классе' }
               ].map((feature, index) => (
                 <Card key={index} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/50 transition-all hover:scale-105">
                   <CardContent className="pt-6 text-center space-y-4">
@@ -133,61 +121,6 @@ export default function Index() {
                 </Card>
               ))}
             </section>
-          </div>
-        )}
-
-        {activeSection === 'chat' && (
-          <div className="max-w-4xl mx-auto animate-fade-in">
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Icon name="Headphones" size={20} className="text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Поддержка 5У</h3>
-                    <p className="text-sm text-muted-foreground">Онлайн</p>
-                  </div>
-                </div>
-
-                <ScrollArea className="h-[500px] pr-4">
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}
-                      >
-                        <div
-                          className={`max-w-[70%] rounded-2xl px-4 py-3 ${
-                            message.sender === 'user'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-secondary text-secondary-foreground'
-                          }`}
-                        >
-                          <p className="text-sm">{message.text}</p>
-                          <p className="text-xs opacity-70 mt-1">
-                            {message.timestamp.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-
-                <div className="flex gap-2 pt-4 border-t border-border/50">
-                  <Input
-                    placeholder="Напишите сообщение..."
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                    className="bg-background/50"
-                  />
-                  <Button onClick={sendMessage} size="icon" className="shrink-0">
-                    <Icon name="Send" size={20} />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         )}
 
@@ -214,41 +147,79 @@ export default function Index() {
         )}
 
         {activeSection === 'contacts' && (
-          <div className="max-w-2xl mx-auto animate-fade-in">
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-              <CardContent className="p-8 space-y-6">
-                <div className="text-center space-y-4 pb-6 border-b border-border/50">
-                  <h2 className="text-3xl font-bold">Свяжитесь с нами</h2>
-                  <p className="text-muted-foreground">
-                    Мы всегда рады помочь и ответить на ваши вопросы
-                  </p>
-                </div>
+          <div className="max-w-4xl mx-auto animate-fade-in">
+            <div className="space-y-6">
+              <div className="text-center space-y-4">
+                <h2 className="text-3xl font-bold">Контакты учеников 5У</h2>
+                <p className="text-muted-foreground">
+                  Все контакты учеников класса для быстрой связи
+                </p>
+              </div>
 
-                <div className="space-y-4">
-                  {[
-                    { icon: 'Mail', label: 'Email', value: 'skorovarovd2014@gmail.com' },
-                    { icon: 'Phone', label: 'Телефон', value: '7 991 653 23 46' },
-                    { icon: 'MapPin', label: 'Адрес', value: 'г. Москва, ул. Примерная, д. 1' },
-                    { icon: 'Clock', label: 'Время работы', value: 'Пн-Пт: 9:00 - 18:00' }
-                  ].map((contact, index) => (
-                    <div key={index} className="flex items-center gap-4 p-4 rounded-lg bg-secondary/50 hover:bg-secondary/70 transition-colors">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Icon name={contact.icon as any} size={20} className="text-primary" />
+              <div className="relative">
+                <Icon name="Search" size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Поиск по имени или номеру телефона..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-background/50"
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {filteredStudents.map((student, index) => (
+                  <Card key={student.id} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Icon name="User" size={24} className="text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-lg mb-1 truncate">{student.name}</h3>
+                          <a 
+                            href={`tel:${student.phone}`}
+                            className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
+                          >
+                            <Icon name="Phone" size={16} />
+                            <span className="text-sm">{student.phone}</span>
+                          </a>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">{contact.label}</p>
-                        <p className="font-medium">{contact.value}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {filteredStudents.length === 0 && (
+                <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                  <CardContent className="p-12 text-center">
+                    <Icon name="SearchX" size={48} className="mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">Ничего не найдено</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50 mt-8">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-semibold flex items-center gap-2">
+                      <Icon name="Mail" size={20} className="text-primary" />
+                      Общая информация
+                    </h3>
+                    <div className="space-y-3 text-muted-foreground">
+                      <div className="flex items-center gap-3">
+                        <Icon name="Mail" size={18} className="text-primary" />
+                        <span>Email: skorovarovd2014@gmail.com</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Icon name="Phone" size={18} className="text-primary" />
+                        <span>Телефон: 7 991 653 23 46</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-
-                <Button className="w-full" size="lg" onClick={() => setActiveSection('chat')}>
-                  <Icon name="MessageCircle" size={20} className="mr-2" />
-                  Написать в чат
-                </Button>
-              </CardContent>
-            </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
       </main>
