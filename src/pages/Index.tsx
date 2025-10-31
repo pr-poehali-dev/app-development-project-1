@@ -88,6 +88,38 @@ export default function Index() {
     }
   };
 
+  const deleteNews = async (newsId: number) => {
+    if (!confirm('Удалить эту новость?')) return;
+
+    try {
+      const response = await fetch(`https://functions.poehali.dev/1cfe69cf-3e6e-48a0-b368-c16c67f14a86?id=${newsId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        await fetchNews();
+      }
+    } catch (err) {
+      console.error('Failed to delete news:', err);
+    }
+  };
+
+  const deleteContact = async (contactId: number) => {
+    if (!confirm('Удалить этот контакт?')) return;
+
+    try {
+      const response = await fetch(`https://functions.poehali.dev/9023ff53-a964-4de8-959b-f938d884ff4a?id=${contactId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        await fetchContacts();
+      }
+    } catch (err) {
+      console.error('Failed to delete contact:', err);
+    }
+  };
+
   const createNews = async () => {
     if (!newsTitle.trim() || !newsContent.trim()) return;
 
@@ -496,7 +528,7 @@ export default function Index() {
             )}
 
             {newsFromDb.map((item, index) => (
-              <Card key={item.id} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.1}s` }}>
+              <Card key={item.id} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all hover:scale-[1.02] group" style={{ animationDelay: `${index * 0.1}s` }}>
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -507,6 +539,16 @@ export default function Index() {
                       <p className="text-muted-foreground mb-3">{item.content}</p>
                       <p className="text-sm text-primary">{new Date(item.createdAt).toLocaleDateString('ru-RU')}</p>
                     </div>
+                    {isAdmin && (
+                      <Button 
+                        size="icon" 
+                        variant="destructive" 
+                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                        onClick={() => deleteNews(item.id)}
+                      >
+                        <Icon name="Trash2" size={16} />
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -590,7 +632,7 @@ export default function Index() {
                   </h3>
                   <div className="grid md:grid-cols-2 gap-4 mb-8">
                     {contactsFromDb.filter(c => c.role === 'админ').map((admin, index) => (
-                      <Card key={admin.id} className="bg-gradient-to-br from-amber-500/10 to-amber-600/20 backdrop-blur-sm border-amber-500/30 hover:border-amber-500/50 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
+                      <Card key={admin.id} className="bg-gradient-to-br from-amber-500/10 to-amber-600/20 backdrop-blur-sm border-amber-500/30 hover:border-amber-500/50 transition-all hover:scale-[1.02] group" style={{ animationDelay: `${index * 0.05}s` }}>
                         <CardContent className="p-5">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
@@ -606,6 +648,16 @@ export default function Index() {
                                 <span className="text-sm">{admin.phone}</span>
                               </a>
                             </div>
+                            {isAdmin && (
+                              <Button 
+                                size="icon" 
+                                variant="destructive" 
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                                onClick={() => deleteContact(admin.id)}
+                              >
+                                <Icon name="Trash2" size={16} />
+                              </Button>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
@@ -643,7 +695,7 @@ export default function Index() {
                   </h3>
                   <div className="grid md:grid-cols-2 gap-4 mb-8">
                     {contactsFromDb.filter(c => c.role === 'учитель').map((teacher, index) => (
-                      <Card key={teacher.id} className="bg-gradient-to-br from-primary/5 to-primary/10 backdrop-blur-sm border-primary/30 hover:border-primary/50 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
+                      <Card key={teacher.id} className="bg-gradient-to-br from-primary/5 to-primary/10 backdrop-blur-sm border-primary/30 hover:border-primary/50 transition-all hover:scale-[1.02] group" style={{ animationDelay: `${index * 0.05}s` }}>
                         <CardContent className="p-5">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
@@ -659,6 +711,16 @@ export default function Index() {
                                 <span className="text-sm">{teacher.phone}</span>
                               </a>
                             </div>
+                            {isAdmin && (
+                              <Button 
+                                size="icon" 
+                                variant="destructive" 
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                                onClick={() => deleteContact(teacher.id)}
+                              >
+                                <Icon name="Trash2" size={16} />
+                              </Button>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
@@ -708,7 +770,7 @@ export default function Index() {
                     c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     c.phone.includes(searchQuery)
                   )).map((student, index) => (
-                    <Card key={student.id} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
+                    <Card key={student.id} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all hover:scale-[1.02] group" style={{ animationDelay: `${index * 0.05}s` }}>
                       <CardContent className="p-5">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -724,6 +786,16 @@ export default function Index() {
                               <span className="text-sm">{student.phone}</span>
                             </a>
                           </div>
+                          {isAdmin && (
+                            <Button 
+                              size="icon" 
+                              variant="destructive" 
+                              className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                              onClick={() => deleteContact(student.id)}
+                            >
+                              <Icon name="Trash2" size={16} />
+                            </Button>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
