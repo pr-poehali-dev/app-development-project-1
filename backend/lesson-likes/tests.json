@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "Get likes for subject",
+      "method": "GET",
+      "path": "/?subject=География&userId=2",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "likes": 0,
+        "hasLiked": false
+      }
+    },
+    {
+      "name": "Toggle like",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "userId": 1,
+        "subject": "Математика",
+        "action": "like"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "likes": 1
+      }
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import AuthModal from '@/components/AuthModal';
 import ChatRoom from '@/components/ChatRoom';
+import LessonModal from '@/components/LessonModal';
 
 type Student = {
   id: number;
@@ -53,6 +54,7 @@ export default function Index() {
   const [contactRole, setContactRole] = useState<'ученик' | 'админ' | 'учитель'>('ученик');
   const [newsFromDb, setNewsFromDb] = useState<any[]>([]);
   const [contactsFromDb, setContactsFromDb] = useState<any[]>([]);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -463,11 +465,12 @@ export default function Index() {
                           return (
                             <div 
                               key={lesson.number} 
-                              className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+                              className={`flex items-start gap-3 p-3 rounded-lg transition-all cursor-pointer ${
                                 isCurrentLesson 
                                   ? 'bg-green-500/20 border-2 border-green-500/50 shadow-lg shadow-green-500/20' 
-                                  : 'bg-secondary/30 hover:bg-secondary/50'
+                                  : 'bg-secondary/30 hover:bg-secondary/50 hover:scale-105'
                               }`}
+                              onClick={() => setSelectedLesson(lesson)}
                             >
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-semibold ${
                                 isCurrentLesson ? 'bg-green-500/40' : 'bg-primary/20'
@@ -480,6 +483,7 @@ export default function Index() {
                                   {lesson.startTime} - {lesson.endTime}
                                 </p>
                               </div>
+                              <Icon name="ChevronRight" size={16} className="text-muted-foreground" />
                             </div>
                           );
                         })}
@@ -868,6 +872,13 @@ export default function Index() {
       </footer>
 
       {showAuthModal && <AuthModal onSuccess={handleAuthSuccess} />}
+      {selectedLesson && (
+        <LessonModal 
+          lesson={selectedLesson} 
+          onClose={() => setSelectedLesson(null)} 
+          userId={userId}
+        />
+      )}
     </div>
   );
 }
