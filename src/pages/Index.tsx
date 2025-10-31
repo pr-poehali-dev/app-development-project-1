@@ -154,7 +154,10 @@ export default function Index() {
     { id: 7, name: 'Катя Зубова', phone: '+7 985 168-66-26' },
     { id: 8, name: 'РАДИОНОВ Матвей', phone: '+7 985 192-79-50' },
     { id: 9, name: 'Терехов Матвей', phone: '+7 915 325-57-67' },
-    { id: 10, name: 'Оля Кормилицина', phone: '+7 985 577-70-04' }
+    { id: 10, name: 'Оля Кормилицина', phone: '+7 985 577-70-04' },
+    { id: 11, name: 'Мария', phone: '+7 969 100-95-08' },
+    { id: 12, name: 'Полина Новикова', phone: '+7 926 933-92-14' },
+    { id: 13, name: 'София', phone: '+7 985 050-65-84' }
   ];
 
   const newsItems = [
@@ -242,6 +245,17 @@ export default function Index() {
                   <a href="https://chat.whatsapp.com/HfGjH0oP5BTDfsfD1vzElG?mode=wwt" target="_blank" rel="noopener noreferrer">
                     <Icon name="MessageCircle" size={20} className="mr-2" />
                     Чат класса в WhatsApp
+                  </a>
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="default"
+                  asChild
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white hover:scale-105 transition-transform"
+                >
+                  <a href="https://delta-ai-project--preview.poehali.dev/" target="_blank" rel="noopener noreferrer">
+                    <Icon name="Brain" size={20} className="mr-2" />
+                    Delta ИИ
                   </a>
                 </Button>
               </div>
