@@ -27,6 +27,8 @@ type Admin = {
 type Lesson = {
   number: number;
   subject: string;
+  startTime: string;
+  endTime: string;
 };
 
 type DaySchedule = {
@@ -41,14 +43,17 @@ export default function Index() {
   const [userId, setUserId] = useState<number | null>(null);
   const [username, setUsername] = useState<string>('');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
     const storedUsername = localStorage.getItem('username');
+    const storedIsAdmin = localStorage.getItem('isAdmin');
     if (storedUserId && storedUsername) {
       setUserId(parseInt(storedUserId));
       setUsername(storedUsername);
       setIsAuthenticated(true);
+      setIsAdmin(storedIsAdmin === 'true');
     }
   }, []);
 
@@ -63,10 +68,17 @@ export default function Index() {
   const handleLogout = () => {
     localStorage.removeItem('userId');
     localStorage.removeItem('username');
+    localStorage.removeItem('isAdmin');
     setUserId(null);
     setUsername('');
     setIsAuthenticated(false);
+    setIsAdmin(false);
     setActiveSection('home');
+  };
+
+  const handleAdminStatusChange = (adminStatus: boolean) => {
+    setIsAdmin(adminStatus);
+    localStorage.setItem('isAdmin', adminStatus.toString());
   };
 
   const handleChatClick = () => {
@@ -86,60 +98,69 @@ export default function Index() {
     { id: 2, name: 'Оксана Владимировна', phone: '+7 903 506-52-18' }
   ];
 
+  const lessonTimes = [
+    { number: 1, startTime: '08:30', endTime: '09:15' },
+    { number: 2, startTime: '09:25', endTime: '10:10' },
+    { number: 3, startTime: '10:30', endTime: '11:15' },
+    { number: 4, startTime: '11:35', endTime: '12:20' },
+    { number: 5, startTime: '12:30', endTime: '13:15' },
+    { number: 6, startTime: '13:25', endTime: '14:10' }
+  ];
+
   const schedule: DaySchedule[] = [
     {
       day: 'Понедельник',
       lessons: [
-        { number: 1, subject: 'РОВ' },
-        { number: 2, subject: 'Математика' },
-        { number: 3, subject: 'ИнЯз' },
-        { number: 4, subject: 'Русский язык' },
-        { number: 5, subject: 'Литература' },
-        { number: 6, subject: 'Английский язык' }
+        { number: 1, subject: 'РОВ', startTime: '08:30', endTime: '09:15' },
+        { number: 2, subject: 'Математика', startTime: '09:25', endTime: '10:10' },
+        { number: 3, subject: 'ИнЯз', startTime: '10:30', endTime: '11:15' },
+        { number: 4, subject: 'Русский язык', startTime: '11:35', endTime: '12:20' },
+        { number: 5, subject: 'Литература', startTime: '12:30', endTime: '13:15' },
+        { number: 6, subject: 'Английский язык', startTime: '13:25', endTime: '14:10' }
       ]
     },
     {
       day: 'Вторник',
       lessons: [
-        { number: 1, subject: 'Английский язык' },
-        { number: 2, subject: 'Русский язык' },
-        { number: 3, subject: 'Математика' },
-        { number: 4, subject: 'История' },
-        { number: 5, subject: 'Литература' },
-        { number: 6, subject: 'Музыка/Труд' }
+        { number: 1, subject: 'Английский язык', startTime: '08:30', endTime: '09:15' },
+        { number: 2, subject: 'Русский язык', startTime: '09:25', endTime: '10:10' },
+        { number: 3, subject: 'Математика', startTime: '10:30', endTime: '11:15' },
+        { number: 4, subject: 'История', startTime: '11:35', endTime: '12:20' },
+        { number: 5, subject: 'Литература', startTime: '12:30', endTime: '13:15' },
+        { number: 6, subject: 'Музыка/Труд', startTime: '13:25', endTime: '14:10' }
       ]
     },
     {
       day: 'Среда',
       lessons: [
-        { number: 1, subject: 'Труд' },
-        { number: 2, subject: 'Труд' },
-        { number: 3, subject: 'Математика' },
-        { number: 4, subject: 'Русский язык' },
-        { number: 5, subject: 'Информатика' },
-        { number: 6, subject: 'Английский язык' }
+        { number: 1, subject: 'Труд', startTime: '08:30', endTime: '09:15' },
+        { number: 2, subject: 'Труд', startTime: '09:25', endTime: '10:10' },
+        { number: 3, subject: 'Математика', startTime: '10:30', endTime: '11:15' },
+        { number: 4, subject: 'Русский язык', startTime: '11:35', endTime: '12:20' },
+        { number: 5, subject: 'Информатика', startTime: '12:30', endTime: '13:15' },
+        { number: 6, subject: 'Английский язык', startTime: '13:25', endTime: '14:10' }
       ]
     },
     {
       day: 'Четверг',
       lessons: [
-        { number: 1, subject: 'История' },
-        { number: 2, subject: 'Русский язык' },
-        { number: 3, subject: 'Математика' },
-        { number: 4, subject: 'Английский язык' },
-        { number: 5, subject: 'География' },
-        { number: 6, subject: 'Физкультура' }
+        { number: 1, subject: 'История', startTime: '08:30', endTime: '09:15' },
+        { number: 2, subject: 'Русский язык', startTime: '09:25', endTime: '10:10' },
+        { number: 3, subject: 'Математика', startTime: '10:30', endTime: '11:15' },
+        { number: 4, subject: 'Английский язык', startTime: '11:35', endTime: '12:20' },
+        { number: 5, subject: 'География', startTime: '12:30', endTime: '13:15' },
+        { number: 6, subject: 'Физкультура', startTime: '13:25', endTime: '14:10' }
       ]
     },
     {
       day: 'Пятница',
       lessons: [
-        { number: 1, subject: 'Математика' },
-        { number: 2, subject: 'Русский язык' },
-        { number: 3, subject: 'История' },
-        { number: 4, subject: 'Литература' },
-        { number: 5, subject: 'Биология' },
-        { number: 6, subject: 'Английский язык' }
+        { number: 1, subject: 'Математика', startTime: '08:30', endTime: '09:15' },
+        { number: 2, subject: 'Русский язык', startTime: '09:25', endTime: '10:10' },
+        { number: 3, subject: 'История', startTime: '10:30', endTime: '11:15' },
+        { number: 4, subject: 'Литература', startTime: '11:35', endTime: '12:20' },
+        { number: 5, subject: 'Биология', startTime: '12:30', endTime: '13:15' },
+        { number: 6, subject: 'Английский язык', startTime: '13:25', endTime: '14:10' }
       ]
     }
   ];
@@ -258,6 +279,17 @@ export default function Index() {
                     Delta ИИ
                   </a>
                 </Button>
+                {isAdmin && (
+                  <Button 
+                    size="lg" 
+                    variant="default"
+                    className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white hover:scale-105 transition-transform"
+                    onClick={() => window.open('https://poehali.dev/editor', '_blank')}
+                  >
+                    <Icon name="Settings" size={20} className="mr-2" />
+                    Редактировать сайт 👑
+                  </Button>
+                )}
               </div>
             </section>
 
@@ -282,7 +314,13 @@ export default function Index() {
         )}
 
         {activeSection === 'chat' && isAuthenticated && userId && (
-          <ChatRoom userId={userId} username={username} onLogout={handleLogout} />
+          <ChatRoom 
+            userId={userId} 
+            username={username} 
+            onLogout={handleLogout}
+            isAdmin={isAdmin}
+            onAdminStatusChange={handleAdminStatusChange}
+          />
         )}
 
         {activeSection === 'schedule' && (
@@ -295,28 +333,55 @@ export default function Index() {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {schedule.map((day, dayIndex) => (
-                <Card key={dayIndex} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all hover:scale-[1.02]" style={{ animationDelay: `${dayIndex * 0.1}s` }}>
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      <Icon name="Calendar" size={20} className="text-primary" />
-                      {day.day}
-                    </h3>
-                    <div className="space-y-3">
-                      {day.lessons.map((lesson) => (
-                        <div key={lesson.number} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
-                          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-sm font-semibold">
-                            {lesson.number}
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">{lesson.subject}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {schedule.map((day, dayIndex) => {
+                const now = new Date();
+                const currentDay = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'][now.getDay()];
+                const currentTime = now.getHours() * 60 + now.getMinutes();
+                const isToday = day.day === currentDay;
+
+                return (
+                  <Card key={dayIndex} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all hover:scale-[1.02]" style={{ animationDelay: `${dayIndex * 0.1}s` }}>
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                        <Icon name="Calendar" size={20} className="text-primary" />
+                        {day.day}
+                      </h3>
+                      <div className="space-y-3">
+                        {day.lessons.map((lesson) => {
+                          const [startHour, startMin] = lesson.startTime.split(':').map(Number);
+                          const [endHour, endMin] = lesson.endTime.split(':').map(Number);
+                          const lessonStart = startHour * 60 + startMin;
+                          const lessonEnd = endHour * 60 + endMin;
+                          const isCurrentLesson = isToday && currentTime >= lessonStart && currentTime <= lessonEnd;
+
+                          return (
+                            <div 
+                              key={lesson.number} 
+                              className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+                                isCurrentLesson 
+                                  ? 'bg-green-500/20 border-2 border-green-500/50 shadow-lg shadow-green-500/20' 
+                                  : 'bg-secondary/30 hover:bg-secondary/50'
+                              }`}
+                            >
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-semibold ${
+                                isCurrentLesson ? 'bg-green-500/40' : 'bg-primary/20'
+                              }`}>
+                                {lesson.number}
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium text-sm">{lesson.subject}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {lesson.startTime} - {lesson.endTime}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         )}

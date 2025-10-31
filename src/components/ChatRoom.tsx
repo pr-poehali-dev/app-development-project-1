@@ -9,24 +9,30 @@ const CHAT_URL = 'https://functions.poehali.dev/a9200a7a-4ac5-47b0-b48a-aa315785
 
 type Message = {
   id: number;
+  userId: number;
   username: string;
   message: string;
   createdAt: string;
+  isAdmin: boolean;
 };
 
 type ChatRoomProps = {
   userId: number;
   username: string;
   onLogout: () => void;
+  isAdmin: boolean;
+  onAdminStatusChange: (isAdmin: boolean) => void;
 };
 
-export default function ChatRoom({ userId, username, onLogout }: ChatRoomProps) {
+export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminStatusChange }: ChatRoomProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+  const [editText, setEditText] = useState('');
 
   const fetchMessages = async () => {
     try {
@@ -82,6 +88,10 @@ export default function ChatRoom({ userId, username, onLogout }: ChatRoomProps) 
         return;
       }
 
+      if (data.admin) {
+        onAdminStatusChange(true);
+      }
+
       setInputMessage('');
       await fetchMessages();
     } catch (err) {
@@ -101,6 +111,54 @@ export default function ChatRoom({ userId, username, onLogout }: ChatRoomProps) 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const deleteMessage = async (messageId: number) => {
+    try {
+      const response = await fetch(`${CHAT_URL}?messageId=${messageId}&userId=${userId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        await fetchMessages();
+      }
+    } catch (err) {
+      console.error('Failed to delete message:', err);
+    }
+  };
+
+  const startEdit = (msg: Message) => {
+    setEditingMessageId(msg.id);
+    setEditText(msg.message);
+  };
+
+  const cancelEdit = () => {
+    setEditingMessageId(null);
+    setEditText('');
+  };
+
+  const saveEdit = async (messageId: number) => {
+    if (!editText.trim()) return;
+
+    try {
+      const response = await fetch(CHAT_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId,
+          userId,
+          message: editText.trim()
+        })
+      });
+
+      if (response.ok) {
+        setEditingMessageId(null);
+        setEditText('');
+        await fetchMessages();
+      }
+    } catch (err) {
+      console.error('Failed to edit message:', err);
+    }
   };
 
   return (
@@ -136,14 +194,18 @@ export default function ChatRoom({ userId, username, onLogout }: ChatRoomProps) 
               ) : (
                 messages.map((msg) => {
                   const isOwn = msg.username === username;
+                  const isEditing = editingMessageId === msg.id;
+                  
                   return (
                     <div
                       key={msg.id}
-                      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-slide-up`}
+                      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-slide-up group`}
                     >
                       <div
-                        className={`max-w-[70%] rounded-2xl px-4 py-3 ${
-                          isOwn
+                        className={`max-w-[70%] rounded-2xl px-4 py-3 relative ${
+                          msg.isAdmin
+                            ? 'bg-yellow-500/20 border-2 border-yellow-500/50 text-foreground'
+                            : isOwn
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-secondary text-secondary-foreground'
                         }`}
@@ -151,12 +213,55 @@ export default function ChatRoom({ userId, username, onLogout }: ChatRoomProps) 
                         {!isOwn && (
                           <p className="text-xs font-semibold mb-1 opacity-80">
                             {msg.username}
+                            {msg.isAdmin && ' 👑'}
                           </p>
                         )}
-                        <p className="text-sm break-words">{msg.message}</p>
-                        <p className="text-xs opacity-70 mt-1">
-                          {formatTime(msg.createdAt)}
-                        </p>
+                        
+                        {isEditing ? (
+                          <div className="space-y-2">
+                            <Input
+                              value={editText}
+                              onChange={(e) => setEditText(e.target.value)}
+                              className="text-sm"
+                            />
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => saveEdit(msg.id)}>
+                                Сохранить
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={cancelEdit}>
+                                Отмена
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm break-words">{msg.message}</p>
+                            <p className="text-xs opacity-70 mt-1">
+                              {formatTime(msg.createdAt)}
+                            </p>
+                          </>
+                        )}
+                        
+                        {isOwn && !isEditing && (
+                          <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                            <Button 
+                              size="icon" 
+                              variant="secondary" 
+                              className="h-6 w-6"
+                              onClick={() => startEdit(msg)}
+                            >
+                              <Icon name="Pencil" size={12} />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant="destructive" 
+                              className="h-6 w-6"
+                              onClick={() => deleteMessage(msg.id)}
+                            >
+                              <Icon name="Trash2" size={12} />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

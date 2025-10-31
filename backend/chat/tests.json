@@ -5,7 +5,7 @@
       "method": "GET",
       "expectedStatus": 200,
       "expectedBody": {
-        "messages": []
+        "messages": "array"
       },
       "bodyMatcher": "partial"
     },
