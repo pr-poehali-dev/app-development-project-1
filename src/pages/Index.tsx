@@ -44,6 +44,15 @@ export default function Index() {
   const [username, setUsername] = useState<string>('');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showNewsForm, setShowNewsForm] = useState(false);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [newsTitle, setNewsTitle] = useState('');
+  const [newsContent, setNewsContent] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [contactRole, setContactRole] = useState<'ученик' | 'админ' | 'учитель'>('ученик');
+  const [newsFromDb, setNewsFromDb] = useState<any[]>([]);
+  const [contactsFromDb, setContactsFromDb] = useState<any[]>([]);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -55,7 +64,72 @@ export default function Index() {
       setIsAuthenticated(true);
       setIsAdmin(storedIsAdmin === 'true');
     }
+    fetchNews();
+    fetchContacts();
   }, []);
+
+  const fetchNews = async () => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/1cfe69cf-3e6e-48a0-b368-c16c67f14a86');
+      const data = await response.json();
+      setNewsFromDb(data.news || []);
+    } catch (err) {
+      console.error('Failed to fetch news:', err);
+    }
+  };
+
+  const fetchContacts = async () => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/9023ff53-a964-4de8-959b-f938d884ff4a');
+      const data = await response.json();
+      setContactsFromDb(data.contacts || []);
+    } catch (err) {
+      console.error('Failed to fetch contacts:', err);
+    }
+  };
+
+  const createNews = async () => {
+    if (!newsTitle.trim() || !newsContent.trim()) return;
+
+    try {
+      const response = await fetch('https://functions.poehali.dev/1cfe69cf-3e6e-48a0-b368-c16c67f14a86', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newsTitle, content: newsContent })
+      });
+
+      if (response.ok) {
+        setNewsTitle('');
+        setNewsContent('');
+        setShowNewsForm(false);
+        await fetchNews();
+      }
+    } catch (err) {
+      console.error('Failed to create news:', err);
+    }
+  };
+
+  const createContact = async () => {
+    if (!contactName.trim() || !contactPhone.trim()) return;
+
+    try {
+      const response = await fetch('https://functions.poehali.dev/9023ff53-a964-4de8-959b-f938d884ff4a', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: contactName, phone: contactPhone, role: contactRole })
+      });
+
+      if (response.ok) {
+        setContactName('');
+        setContactPhone('');
+        setContactRole('ученик');
+        setShowContactForm(false);
+        await fetchContacts();
+      }
+    } catch (err) {
+      console.error('Failed to create contact:', err);
+    }
+  };
 
   const handleAuthSuccess = (newUserId: number, newUsername: string) => {
     setUserId(newUserId);
@@ -388,7 +462,56 @@ export default function Index() {
 
         {activeSection === 'news' && (
           <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
-            <h2 className="text-3xl font-bold mb-8">Последние новости</h2>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-bold">Последние новости</h2>
+              {isAdmin && (
+                <Button onClick={() => setShowNewsForm(!showNewsForm)} className="flex items-center gap-2">
+                  <Icon name="Plus" size={20} />
+                  Добавить новость
+                </Button>
+              )}
+            </div>
+
+            {showNewsForm && (
+              <Card className="bg-card/80 backdrop-blur-sm border-border/50">
+                <CardContent className="p-6 space-y-4">
+                  <h3 className="text-xl font-semibold">Новая новость</h3>
+                  <Input 
+                    placeholder="Заголовок" 
+                    value={newsTitle}
+                    onChange={(e) => setNewsTitle(e.target.value)}
+                  />
+                  <textarea 
+                    className="w-full p-3 rounded-md bg-background border border-input min-h-[100px]"
+                    placeholder="Текст новости"
+                    value={newsContent}
+                    onChange={(e) => setNewsContent(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={createNews}>Создать</Button>
+                    <Button variant="outline" onClick={() => setShowNewsForm(false)}>Отмена</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {newsFromDb.map((item, index) => (
+              <Card key={item.id} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.1}s` }}>
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Icon name="Newspaper" size={24} className="text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
+                      <p className="text-muted-foreground mb-3">{item.content}</p>
+                      <p className="text-sm text-primary">{new Date(item.createdAt).toLocaleDateString('ru-RU')}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
             {newsItems.map((item, index) => (
               <Card key={item.id} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.1}s` }}>
                 <CardContent className="p-6">
@@ -412,71 +535,158 @@ export default function Index() {
           <div className="max-w-4xl mx-auto animate-fade-in">
             <div className="space-y-6">
               <div className="text-center space-y-4">
-                <h2 className="text-3xl font-bold">Контакты учеников 5У</h2>
-                <p className="text-muted-foreground">
-                  Все контакты учеников класса для быстрой связи
-                </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h2 className="text-3xl font-bold">Контакты учеников 5У</h2>
+                    <p className="text-muted-foreground">
+                      Все контакты учеников класса для быстрой связи
+                    </p>
+                  </div>
+                  {isAdmin && (
+                    <Button onClick={() => setShowContactForm(!showContactForm)} className="flex items-center gap-2">
+                      <Icon name="Plus" size={20} />
+                      Добавить контакт
+                    </Button>
+                  )}
+                </div>
+
+                {showContactForm && (
+                  <Card className="bg-card/80 backdrop-blur-sm border-border/50 text-left">
+                    <CardContent className="p-6 space-y-4">
+                      <h3 className="text-xl font-semibold">Новый контакт</h3>
+                      <Input 
+                        placeholder="Имя" 
+                        value={contactName}
+                        onChange={(e) => setContactName(e.target.value)}
+                      />
+                      <Input 
+                        placeholder="Телефон" 
+                        value={contactPhone}
+                        onChange={(e) => setContactPhone(e.target.value)}
+                      />
+                      <select 
+                        className="w-full p-3 rounded-md bg-background border border-input"
+                        value={contactRole}
+                        onChange={(e) => setContactRole(e.target.value as any)}
+                      >
+                        <option value="ученик">Ученик</option>
+                        <option value="учитель">Учитель</option>
+                        <option value="админ">Админ</option>
+                      </select>
+                      <div className="flex gap-2">
+                        <Button onClick={createContact}>Создать</Button>
+                        <Button variant="outline" onClick={() => setShowContactForm(false)}>Отмена</Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
 
-              <div>
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Icon name="Shield" size={24} className="text-primary" />
-                  Администраторы
-                </h3>
-                <div className="grid md:grid-cols-2 gap-4 mb-8">
-                  {admins.map((admin, index) => (
-                    <Card key={admin.id} className="bg-gradient-to-br from-amber-500/10 to-amber-600/20 backdrop-blur-sm border-amber-500/30 hover:border-amber-500/50 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
-                      <CardContent className="p-5">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
-                            <Icon name="Shield" size={24} className="text-amber-500" />
+              {contactsFromDb.filter(c => c.role === 'админ').length > 0 && (
+                <div>
+                  <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <Icon name="Shield" size={24} className="text-primary" />
+                    Администраторы
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4 mb-8">
+                    {contactsFromDb.filter(c => c.role === 'админ').map((admin, index) => (
+                      <Card key={admin.id} className="bg-gradient-to-br from-amber-500/10 to-amber-600/20 backdrop-blur-sm border-amber-500/30 hover:border-amber-500/50 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                              <Icon name="Shield" size={24} className="text-amber-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-lg mb-1 truncate">{admin.name}</h3>
+                              <a 
+                                href={`tel:${admin.phone}`}
+                                className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
+                              >
+                                <Icon name="Phone" size={16} />
+                                <span className="text-sm">{admin.phone}</span>
+                              </a>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-lg mb-1 truncate">{admin.name}</h3>
-                            <a 
-                              href={`tel:${admin.phone}`}
-                              className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
-                            >
-                              <Icon name="Phone" size={16} />
-                              <span className="text-sm">{admin.phone}</span>
-                            </a>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {admins.map((admin, index) => (
+                      <Card key={`old-${admin.id}`} className="bg-gradient-to-br from-amber-500/10 to-amber-600/20 backdrop-blur-sm border-amber-500/30 hover:border-amber-500/50 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                              <Icon name="Shield" size={24} className="text-amber-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-lg mb-1 truncate">{admin.name}</h3>
+                              <a 
+                                href={`tel:${admin.phone}`}
+                                className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
+                              >
+                                <Icon name="Phone" size={16} />
+                                <span className="text-sm">{admin.phone}</span>
+                              </a>
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div>
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Icon name="GraduationCap" size={24} className="text-primary" />
-                  Учителя
-                </h3>
-                <div className="grid md:grid-cols-2 gap-4 mb-8">
-                  {teachers.map((teacher, index) => (
-                    <Card key={teacher.id} className="bg-gradient-to-br from-primary/5 to-primary/10 backdrop-blur-sm border-primary/30 hover:border-primary/50 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
-                      <CardContent className="p-5">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                            <Icon name="GraduationCap" size={24} className="text-primary" />
+              {contactsFromDb.filter(c => c.role === 'учитель').length > 0 && (
+                <div>
+                  <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <Icon name="GraduationCap" size={24} className="text-primary" />
+                    Учителя
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4 mb-8">
+                    {contactsFromDb.filter(c => c.role === 'учитель').map((teacher, index) => (
+                      <Card key={teacher.id} className="bg-gradient-to-br from-primary/5 to-primary/10 backdrop-blur-sm border-primary/30 hover:border-primary/50 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                              <Icon name="GraduationCap" size={24} className="text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-lg mb-1 truncate">{teacher.name}</h3>
+                              <a 
+                                href={`tel:${teacher.phone}`}
+                                className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
+                              >
+                                <Icon name="Phone" size={16} />
+                                <span className="text-sm">{teacher.phone}</span>
+                              </a>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-lg mb-1 truncate">{teacher.name}</h3>
-                            <a 
-                              href={`tel:${teacher.phone}`}
-                              className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
-                            >
-                              <Icon name="Phone" size={16} />
-                              <span className="text-sm">{teacher.phone}</span>
-                            </a>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {teachers.map((teacher, index) => (
+                      <Card key={`old-${teacher.id}`} className="bg-gradient-to-br from-primary/5 to-primary/10 backdrop-blur-sm border-primary/30 hover:border-primary/50 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                              <Icon name="GraduationCap" size={24} className="text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-lg mb-1 truncate">{teacher.name}</h3>
+                              <a 
+                                href={`tel:${teacher.phone}`}
+                                className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
+                              >
+                                <Icon name="Phone" size={16} />
+                                <span className="text-sm">{teacher.phone}</span>
+                              </a>
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="relative">
                 <Icon name="Search" size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -494,8 +704,32 @@ export default function Index() {
                   Ученики
                 </h3>
                 <div className="grid md:grid-cols-2 gap-4">
+                  {contactsFromDb.filter(c => c.role === 'ученик' && (
+                    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    c.phone.includes(searchQuery)
+                  )).map((student, index) => (
+                    <Card key={student.id} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
+                      <CardContent className="p-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <Icon name="User" size={24} className="text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-lg mb-1 truncate">{student.name}</h3>
+                            <a 
+                              href={`tel:${student.phone}`}
+                              className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
+                            >
+                              <Icon name="Phone" size={16} />
+                              <span className="text-sm">{student.phone}</span>
+                            </a>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                   {filteredStudents.map((student, index) => (
-                  <Card key={student.id} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
+                  <Card key={`old-${student.id}`} className="bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all hover:scale-[1.02]" style={{ animationDelay: `${index * 0.05}s` }}>
                     <CardContent className="p-5">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -518,7 +752,10 @@ export default function Index() {
                 </div>
               </div>
 
-              {filteredStudents.length === 0 && (
+              {contactsFromDb.filter(c => c.role === 'ученик' && (
+                c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                c.phone.includes(searchQuery)
+              )).length === 0 && filteredStudents.length === 0 && (
                 <Card className="bg-card/50 backdrop-blur-sm border-border/50">
                   <CardContent className="p-12 text-center">
                     <Icon name="SearchX" size={48} className="mx-auto mb-4 text-muted-foreground" />

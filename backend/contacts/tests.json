@@ -1,0 +1,34 @@
+{
+  "tests": [
+    {
+      "name": "Get contacts list",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "contacts": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Create contact",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Test User",
+        "phone": "+7 999 123-45-67",
+        "role": "ученик"
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "success": true,
+        "contact": {
+          "name": "string",
+          "phone": "string",
+          "role": "string"
+        }
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
