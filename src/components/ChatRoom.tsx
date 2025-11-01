@@ -22,9 +22,11 @@ type ChatRoomProps = {
   onLogout: () => void;
   isAdmin: boolean;
   onAdminStatusChange: (isAdmin: boolean) => void;
+  adminChatMode?: boolean;
+  adminAnonimMode?: boolean;
 };
 
-export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminStatusChange }: ChatRoomProps) {
+export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminStatusChange, adminChatMode = false, adminAnonimMode = false }: ChatRoomProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -70,13 +72,17 @@ export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminS
     setLoading(true);
 
     try {
+      const displayUsername = adminAnonimMode && isAdmin ? 'Аноним' : username;
+      const shouldShowAsAdmin = isAdmin && adminChatMode && !adminAnonimMode;
+      
       const response = await fetch(CHAT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
-          username,
-          message: inputMessage.trim()
+          username: displayUsername,
+          message: inputMessage.trim(),
+          isAdmin: shouldShowAsAdmin
         })
       });
 

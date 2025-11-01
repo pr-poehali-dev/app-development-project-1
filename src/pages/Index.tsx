@@ -7,6 +7,7 @@ import AuthModal from '@/components/AuthModal';
 import ChatRoom from '@/components/ChatRoom';
 import LessonModal from '@/components/LessonModal';
 import AdminConsole from '@/components/AdminConsole';
+import LessonEditModal from '@/components/LessonEditModal';
 
 type Student = {
   id: number;
@@ -62,17 +63,35 @@ export default function Index() {
   const [adminChatMode, setAdminChatMode] = useState(false);
   const [adminAnonimMode, setAdminAnonimMode] = useState(false);
   const [adminLessonEditMode, setAdminLessonEditMode] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<{lesson: Lesson, day: string} | null>(null);
+  const [schedule, setSchedule] = useState<DaySchedule[]>([]);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
     const storedUsername = localStorage.getItem('username');
     const storedIsAdmin = localStorage.getItem('isAdmin');
+    const storedAdminChatMode = localStorage.getItem('adminChatMode');
+    const storedAdminAnonimMode = localStorage.getItem('adminAnonimMode');
+    const storedAdminLessonEditMode = localStorage.getItem('adminLessonEditMode');
+    const storedSchedule = localStorage.getItem('schedule');
+    
     if (storedUserId && storedUsername) {
       setUserId(parseInt(storedUserId));
       setUsername(storedUsername);
       setIsAuthenticated(true);
       setIsAdmin(storedIsAdmin === 'true');
     }
+    
+    setAdminChatMode(storedAdminChatMode === 'true');
+    setAdminAnonimMode(storedAdminAnonimMode === 'true');
+    setAdminLessonEditMode(storedAdminLessonEditMode === 'true');
+    
+    if (storedSchedule) {
+      setSchedule(JSON.parse(storedSchedule));
+    } else {
+      setSchedule(defaultSchedule);
+    }
+    
     fetchNews();
     fetchContacts();
   }, []);
@@ -265,6 +284,34 @@ export default function Index() {
     { id: 2, name: 'Оксана Владимировна', phone: '+7 903 506-52-18' }
   ];
 
+  const handleLessonSave = (updatedLesson: Lesson) => {
+    if (!editingLesson) return;
+    
+    const newSchedule = schedule.map(day => {
+      if (day.day === editingLesson.day) {
+        return {
+          ...day,
+          lessons: day.lessons.map(lesson => 
+            lesson.number === updatedLesson.number ? updatedLesson : lesson
+          )
+        };
+      }
+      return day;
+    });
+    
+    setSchedule(newSchedule);
+    localStorage.setItem('schedule', JSON.stringify(newSchedule));
+    setEditingLesson(null);
+  };
+
+  const handleLessonClick = (lesson: Lesson, day: string) => {
+    if (adminLessonEditMode && isAdmin) {
+      setEditingLesson({ lesson, day });
+    } else {
+      setSelectedLesson(lesson);
+    }
+  };
+
   const lessonTimes = [
     { number: 1, startTime: '08:30', endTime: '09:15' },
     { number: 2, startTime: '09:25', endTime: '10:10' },
@@ -274,7 +321,7 @@ export default function Index() {
     { number: 6, startTime: '13:25', endTime: '14:10' }
   ];
 
-  const schedule: DaySchedule[] = [
+  const defaultSchedule: DaySchedule[] = [
     {
       day: 'Понедельник',
       lessons: [
@@ -379,12 +426,36 @@ export default function Index() {
       <nav className="border-b border-border/50 backdrop-blur-sm bg-background/30 sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <h1 
-              className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent cursor-pointer select-none"
-              onClick={handleLogoClick}
-            >
-              5У
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 
+                className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent cursor-pointer select-none"
+                onClick={handleLogoClick}
+              >
+                5У
+              </h1>
+              {isAdmin && (
+                <div className="flex items-center gap-2">
+                  {adminChatMode && (
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/20 border border-blue-500/50">
+                      <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
+                      <span className="text-xs text-blue-400 font-medium">Chat</span>
+                    </div>
+                  )}
+                  {adminAnonimMode && (
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-purple-500/20 border border-purple-500/50">
+                      <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></div>
+                      <span className="text-xs text-purple-400 font-medium">Anonim</span>
+                    </div>
+                  )}
+                  {adminLessonEditMode && (
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-orange-500/20 border border-orange-500/50">
+                      <div className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></div>
+                      <span className="text-xs text-orange-400 font-medium">Edit</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             <div className="flex gap-6">
               {[
                 { id: 'home', label: 'Главная', icon: 'Home', onClick: () => setActiveSection('home') },
@@ -480,6 +551,8 @@ export default function Index() {
             onLogout={handleLogout}
             isAdmin={isAdmin}
             onAdminStatusChange={handleAdminStatusChange}
+            adminChatMode={adminChatMode}
+            adminAnonimMode={adminAnonimMode}
           />
         )}
 
@@ -490,6 +563,12 @@ export default function Index() {
               <p className="text-muted-foreground">
                 Расписание занятий на неделю
               </p>
+              {adminLessonEditMode && isAdmin && (
+                <div className="flex items-center justify-center gap-2 text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+                  <Icon name="Edit" size={20} />
+                  <span className="font-semibold">Режим редактирования активен</span>
+                </div>
+              )}
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -520,9 +599,11 @@ export default function Index() {
                               className={`flex items-start gap-3 p-3 rounded-lg transition-all cursor-pointer ${
                                 isCurrentLesson 
                                   ? 'bg-green-500/20 border-2 border-green-500/50 shadow-lg shadow-green-500/20' 
+                                  : adminLessonEditMode && isAdmin
+                                  ? 'bg-orange-500/20 border-2 border-orange-500/50 hover:bg-orange-500/30 hover:scale-105'
                                   : 'bg-secondary/30 hover:bg-secondary/50 hover:scale-105'
                               }`}
-                              onClick={() => setSelectedLesson(lesson)}
+                              onClick={() => handleLessonClick(lesson, day.day)}
                             >
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-semibold ${
                                 isCurrentLesson ? 'bg-green-500/40' : 'bg-primary/20'
@@ -936,6 +1017,14 @@ export default function Index() {
         onClose={() => setShowAdminConsole(false)} 
         onCommand={handleConsoleCommand}
       />
+      {editingLesson && (
+        <LessonEditModal 
+          lesson={editingLesson.lesson}
+          day={editingLesson.day}
+          onClose={() => setEditingLesson(null)}
+          onSave={handleLessonSave}
+        />
+      )}
     </div>
   );
 }
