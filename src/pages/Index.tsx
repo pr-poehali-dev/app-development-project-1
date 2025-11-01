@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import AuthModal from '@/components/AuthModal';
 import ChatRoom from '@/components/ChatRoom';
 import LessonModal from '@/components/LessonModal';
+import AdminConsole from '@/components/AdminConsole';
 
 type Student = {
   id: number;
@@ -55,6 +56,12 @@ export default function Index() {
   const [newsFromDb, setNewsFromDb] = useState<any[]>([]);
   const [contactsFromDb, setContactsFromDb] = useState<any[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [showAdminConsole, setShowAdminConsole] = useState(false);
+  const [logoClickCount, setLogoClickCount] = useState(0);
+  const [logoClickTimer, setLogoClickTimer] = useState<NodeJS.Timeout | null>(null);
+  const [adminChatMode, setAdminChatMode] = useState(false);
+  const [adminAnonimMode, setAdminAnonimMode] = useState(false);
+  const [adminLessonEditMode, setAdminLessonEditMode] = useState(false);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -197,6 +204,58 @@ export default function Index() {
     }
   };
 
+  const handleLogoClick = () => {
+    if (!isAdmin) return;
+
+    if (logoClickTimer) {
+      clearTimeout(logoClickTimer);
+    }
+
+    const newCount = logoClickCount + 1;
+    setLogoClickCount(newCount);
+
+    if (newCount === 3) {
+      setShowAdminConsole(true);
+      setLogoClickCount(0);
+      setLogoClickTimer(null);
+    } else {
+      const timer = setTimeout(() => {
+        setLogoClickCount(0);
+        setLogoClickTimer(null);
+      }, 1000);
+      setLogoClickTimer(timer);
+    }
+  };
+
+  const handleConsoleCommand = async (command: string) => {
+    const parts = command.trim().split(' ');
+    const mainCommand = parts[0];
+
+    if (mainCommand === '/adminChat') {
+      const value = parts[1] === 'true';
+      setAdminChatMode(value);
+      localStorage.setItem('adminChatMode', value.toString());
+      console.log(`✅ Admin chat mode: ${value ? 'enabled' : 'disabled'}`);
+    } else if (mainCommand === '/admin') {
+      if (parts[1] === 'anonim') {
+        setAdminAnonimMode(true);
+        localStorage.setItem('adminAnonimMode', 'true');
+        console.log('✅ Anonim mode enabled');
+      } else if (parts[1] === 'default') {
+        setAdminAnonimMode(false);
+        localStorage.setItem('adminAnonimMode', 'false');
+        console.log('✅ Default mode enabled');
+      }
+    } else if (mainCommand === '/adminLesson') {
+      const value = parts[1] === 'true';
+      setAdminLessonEditMode(value);
+      localStorage.setItem('adminLessonEditMode', value.toString());
+      console.log(`✅ Admin lesson edit mode: ${value ? 'enabled' : 'disabled'}`);
+    } else {
+      console.log('❌ Unknown command:', command);
+    }
+  };
+
   const admins: Admin[] = [
     { id: 1, name: 'Дмитрий Скороваров', phone: '+7 991 653 23 46' }
   ];
@@ -320,7 +379,10 @@ export default function Index() {
       <nav className="border-b border-border/50 backdrop-blur-sm bg-background/30 sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+            <h1 
+              className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent cursor-pointer select-none"
+              onClick={handleLogoClick}
+            >
               5У
             </h1>
             <div className="flex gap-6">
@@ -387,17 +449,7 @@ export default function Index() {
                     Delta ИИ
                   </a>
                 </Button>
-                {isAdmin && (
-                  <Button 
-                    size="lg" 
-                    variant="default"
-                    className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white hover:scale-105 transition-transform"
-                    onClick={() => window.open('https://poehali.dev/editor', '_blank')}
-                  >
-                    <Icon name="Settings" size={20} className="mr-2" />
-                    Редактировать сайт 👑
-                  </Button>
-                )}
+
               </div>
             </section>
 
@@ -879,6 +931,11 @@ export default function Index() {
           userId={userId}
         />
       )}
+      <AdminConsole 
+        isOpen={showAdminConsole} 
+        onClose={() => setShowAdminConsole(false)} 
+        onCommand={handleConsoleCommand}
+      />
     </div>
   );
 }
