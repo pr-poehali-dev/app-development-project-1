@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Icon from '@/components/ui/icon';
+import AdminGiveModal from '@/components/AdminGiveModal';
 
 const CHAT_URL = 'https://functions.poehali.dev/a9200a7a-4ac5-47b0-b48a-aa315785eb3c';
 
@@ -24,9 +25,10 @@ type ChatRoomProps = {
   onAdminStatusChange: (isAdmin: boolean) => void;
   adminChatMode?: boolean;
   adminAnonimMode?: boolean;
+  adminPromocode?: string;
 };
 
-export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminStatusChange, adminChatMode = false, adminAnonimMode = false }: ChatRoomProps) {
+export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminStatusChange, adminChatMode = false, adminAnonimMode = false, adminPromocode = 'admin121114' }: ChatRoomProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,6 +37,7 @@ export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminS
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
+  const [showAdminGiveModal, setShowAdminGiveModal] = useState(false);
 
   const fetchMessages = async () => {
     try {
@@ -67,6 +70,12 @@ export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminS
 
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
+
+    if (inputMessage.trim() === '/adminGive' && isAdmin) {
+      setShowAdminGiveModal(true);
+      setInputMessage('');
+      return;
+    }
 
     setError('');
     setLoading(true);
@@ -168,6 +177,7 @@ export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminS
   };
 
   return (
+    <>
     <div className="max-w-4xl mx-auto animate-fade-in">
       <Card className="bg-card/50 backdrop-blur-sm border-border/50">
         <CardContent className="p-6 space-y-4">
@@ -304,5 +314,15 @@ export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminS
         </CardContent>
       </Card>
     </div>
+    {showAdminGiveModal && (
+      <AdminGiveModal 
+        onClose={() => setShowAdminGiveModal(false)}
+        onConfirm={(level, targetUser) => {
+          console.log(`✅ Админ права выданы: ${targetUser} (${level})`);
+        }}
+        currentPromocode={adminPromocode}
+      />
+    )}
+  </>
   );
 }
