@@ -68,6 +68,7 @@ export default function Index() {
   const [schedule, setSchedule] = useState<DaySchedule[]>([]);
   const [adminLevel, setAdminLevel] = useState<'ma1' | 'sa1' | null>(null);
   const [adminPromocode, setAdminPromocode] = useState('admin121114');
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [adminSiteEditMode, setAdminSiteEditMode] = useState(false);
 
   useEffect(() => {
@@ -283,6 +284,11 @@ export default function Index() {
         localStorage.removeItem('adminLevel');
         console.log('✅ Админ права сняты');
         setShowAdminConsole(false);
+      } else if (parts[1] === 'technology') {
+        const value = parts[2] === 'on';
+        setMaintenanceMode(value);
+        localStorage.setItem('maintenanceMode', value.toString());
+        console.log(`✅ Maintenance mode: ${value ? 'ON' : 'OFF'}`);
       } else if (parts[1] === 'site') {
         const value = parts[2] === 'true';
         setAdminSiteEditMode(value);
@@ -304,6 +310,7 @@ export default function Index() {
       console.log('📋 Список всех команд:');
       console.log('/adminGive - выдать админку');
       console.log('/admin remove - снять админку');
+      console.log('/admin technology on/off - режим тех. работ');
       console.log('/adminChat true/false - админ сообщения');
       console.log('/admin anonim/default - анонимный режим');
       console.log('/adminLesson true/false - редактирование расписания');
@@ -311,7 +318,7 @@ export default function Index() {
       console.log('/promocode - узнать промокод');
       console.log('/promocode edit [код] - изменить промокод');
       console.log('/admin sistem - список пользователей');
-      console.log('/remove [ник] - удалить пользователь');
+      console.log('/remove [ник] - удалить пользователя');
     } else if (mainCommand === '/promocode') {
       if (parts[1] === 'edit' && parts[2]) {
         const newPromocode = parts.slice(2).join(' ');
