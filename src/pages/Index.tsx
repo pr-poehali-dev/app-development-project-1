@@ -8,7 +8,6 @@ import ChatRoom from '@/components/ChatRoom';
 import LessonModal from '@/components/LessonModal';
 import AdminConsole from '@/components/AdminConsole';
 import LessonEditModal from '@/components/LessonEditModal';
-import AdminGiveModal from '@/components/AdminGiveModal';
 
 type Student = {
   id: number;
@@ -66,11 +65,6 @@ export default function Index() {
   const [adminLessonEditMode, setAdminLessonEditMode] = useState(false);
   const [editingLesson, setEditingLesson] = useState<{lesson: Lesson, day: string} | null>(null);
   const [schedule, setSchedule] = useState<DaySchedule[]>([]);
-  const [adminLevel, setAdminLevel] = useState<'ma1' | 'sa1' | null>(null);
-  const [adminPromocode, setAdminPromocode] = useState('admin121114');
-  const [showAdminGiveModal, setShowAdminGiveModal] = useState(false);
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [adminSiteEditMode, setAdminSiteEditMode] = useState(false);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -80,10 +74,6 @@ export default function Index() {
     const storedAdminAnonimMode = localStorage.getItem('adminAnonimMode');
     const storedAdminLessonEditMode = localStorage.getItem('adminLessonEditMode');
     const storedSchedule = localStorage.getItem('schedule');
-    const storedAdminLevel = localStorage.getItem('adminLevel') as 'ma1' | 'sa1' | null;
-    const storedAdminPromocode = localStorage.getItem('adminPromocode');
-    const storedMaintenanceMode = localStorage.getItem('maintenanceMode');
-    const storedAdminSiteEditMode = localStorage.getItem('adminSiteEditMode');
     
     if (storedUserId && storedUsername) {
       setUserId(parseInt(storedUserId));
@@ -95,10 +85,6 @@ export default function Index() {
     setAdminChatMode(storedAdminChatMode === 'true');
     setAdminAnonimMode(storedAdminAnonimMode === 'true');
     setAdminLessonEditMode(storedAdminLessonEditMode === 'true');
-    setAdminLevel(storedAdminLevel);
-    setAdminPromocode(storedAdminPromocode || 'admin121114');
-    setMaintenanceMode(storedMaintenanceMode === 'true');
-    setAdminSiteEditMode(storedAdminSiteEditMode === 'true');
     
     if (storedSchedule) {
       setSchedule(JSON.parse(storedSchedule));
@@ -278,69 +264,12 @@ export default function Index() {
         setAdminAnonimMode(false);
         localStorage.setItem('adminAnonimMode', 'false');
         console.log('✅ Default mode enabled');
-      } else if (parts[1] === 'remove') {
-        setIsAdmin(false);
-        setAdminLevel(null);
-        localStorage.setItem('isAdmin', 'false');
-        localStorage.removeItem('adminLevel');
-        console.log('✅ Админ права сняты');
-        setShowAdminConsole(false);
-      } else if (parts[1] === 'technology') {
-        const value = parts[2] === 'on';
-        setMaintenanceMode(value);
-        localStorage.setItem('maintenanceMode', value.toString());
-        console.log(`✅ Maintenance mode: ${value ? 'ON' : 'OFF'}`);
-      } else if (parts[1] === 'site') {
-        const value = parts[2] === 'true';
-        setAdminSiteEditMode(value);
-        localStorage.setItem('adminSiteEditMode', value.toString());
-        console.log(`✅ Site edit mode: ${value ? 'enabled' : 'disabled'}`);
-      } else if (parts[1] === 'sistem') {
-        const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-        console.log('👥 Зарегистрированные пользователи:');
-        users.forEach((user: any, index: number) => {
-          console.log(`${index + 1}. ${user.username} (ID: ${user.id})`);
-        });
       }
     } else if (mainCommand === '/adminLesson') {
       const value = parts[1] === 'true';
       setAdminLessonEditMode(value);
       localStorage.setItem('adminLessonEditMode', value.toString());
       console.log(`✅ Admin lesson edit mode: ${value ? 'enabled' : 'disabled'}`);
-    } else if (mainCommand === '/adminGive') {
-      setShowAdminGiveModal(true);
-    } else if (mainCommand === '/commands') {
-      console.log('📋 Список всех команд:');
-      console.log('/adminGive - выдать админку');
-      console.log('/admin remove - снять админку');
-      console.log('/admin technology on/off - режим тех. работ');
-      console.log('/adminChat true/false - админ сообщения');
-      console.log('/admin anonim/default - анонимный режим');
-      console.log('/adminLesson true/false - редактирование расписания');
-      console.log('/admin site true/false - редактирование сайта');
-      console.log('/promocode - узнать промокод');
-      console.log('/promocode edit [код] - изменить промокод');
-      console.log('/admin sistem - список пользователей');
-      console.log('/remove [ник] - удалить пользователя');
-    } else if (mainCommand === '/promocode') {
-      if (parts[1] === 'edit' && parts[2]) {
-        const newPromocode = parts.slice(2).join(' ');
-        setAdminPromocode(newPromocode);
-        localStorage.setItem('adminPromocode', newPromocode);
-        console.log(`✅ Промокод изменен на: ${newPromocode}`);
-      } else {
-        console.log(`🔑 Текущий промокод: ${adminPromocode}`);
-      }
-    } else if (mainCommand === '/remove' && parts[1]) {
-      const targetUsername = parts.slice(1).join(' ');
-      const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-      const filteredUsers = users.filter((u: any) => u.username !== targetUsername);
-      if (users.length !== filteredUsers.length) {
-        localStorage.setItem('registeredUsers', JSON.stringify(filteredUsers));
-        console.log(`✅ Пользователь ${targetUsername} удален`);
-      } else {
-        console.log(`❌ Пользователь ${targetUsername} не найден`);
-      }
     } else {
       console.log('❌ Unknown command:', command);
     }
@@ -1095,24 +1024,6 @@ export default function Index() {
           onClose={() => setEditingLesson(null)}
           onSave={handleLessonSave}
         />
-      )}
-      {showAdminGiveModal && (
-        <AdminGiveModal 
-          onClose={() => setShowAdminGiveModal(false)}
-          onConfirm={(level, targetUser) => {
-            console.log(`✅ Админ права выданы: ${targetUser} (${level})`);
-          }}
-          currentPromocode={adminPromocode}
-        />
-      )}
-      {maintenanceMode && !isAdmin && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[200]">
-          <div className="text-center space-y-4 p-8 bg-gradient-to-br from-orange-900/50 to-red-900/50 rounded-2xl border border-orange-500/30">
-            <Icon name="AlertTriangle" size={48} className="text-orange-400 mx-auto" />
-            <h2 className="text-2xl font-bold text-white">Технические работы</h2>
-            <p className="text-gray-300">Внимание, ведутся работы. Приходите позже.</p>
-          </div>
-        </div>
       )}
     </div>
   );

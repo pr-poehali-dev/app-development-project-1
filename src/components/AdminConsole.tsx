@@ -59,23 +59,13 @@ export default function AdminConsole({ isOpen, onClose, onCommand }: AdminConsol
         <div className="p-4 space-y-4">
           <div className="h-64 overflow-y-auto bg-black/50 rounded p-3 space-y-1 border border-green-500/20">
             {history.length === 0 ? (
-              <div className="text-green-400/60 text-sm">
-                <p>Welcome to Admin Console v2.0</p>
-                <p className="mt-2">Основные команды:</p>
-                <p className="ml-2">/commands - показать все команды</p>
-                <p className="ml-2">/adminGive - выдать админку</p>
-                <p className="ml-2">/admin remove - снять с себя админку</p>
-                <p className="ml-2">/admin technology on/off - режим тех. работ</p>
-                <p className="mt-2">Режимы:</p>
-                <p className="ml-2">/adminChat true/false - админ сообщения</p>
-                <p className="ml-2">/admin anonim/default - анонимный режим</p>
-                <p className="ml-2">/adminLesson true/false - редактирование расписания</p>
-                <p className="ml-2">/admin site true/false - редактирование сайта</p>
-                <p className="mt-2">Управление:</p>
-                <p className="ml-2">/promocode - узнать промокод</p>
-                <p className="ml-2">/promocode edit [код] - изменить промокод</p>
-                <p className="ml-2">/admin sistem - список пользователей</p>
-                <p className="ml-2">/remove [ник] - удалить пользователя</p>
+              <div className="text-green-400/60">
+                <p>Welcome to Admin Console</p>
+                <p className="mt-2">Available commands:</p>
+                <p className="ml-2">/adminChat true/false - вкл/выкл админ сообщения</p>
+                <p className="ml-2">/admin anonim - писать от анонима</p>
+                <p className="ml-2">/admin default - писать как обычный пользователь</p>
+                <p className="ml-2">/adminLesson true/false - режим редактирования расписания</p>
               </div>
             ) : (
               history.map((line, i) => (
