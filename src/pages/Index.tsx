@@ -9,6 +9,7 @@ import LessonModal from '@/components/LessonModal';
 import AdminConsole from '@/components/AdminConsole';
 import LessonEditModal from '@/components/LessonEditModal';
 import AdminGiveModal from '@/components/AdminGiveModal';
+import EditorModal from '@/components/EditorModal';
 
 type Student = {
   id: number;
@@ -33,11 +34,28 @@ type Lesson = {
   subject: string;
   startTime: string;
   endTime: string;
+  homework?: string;
+  likes?: number;
+  likedBy?: number[];
 };
 
 type DaySchedule = {
   day: string;
   lessons: Lesson[];
+};
+
+type Badge = {
+  id: string;
+  name: string;
+  icon: string;
+  background: string;
+  condition: string;
+};
+
+type UserBadge = {
+  userId: number;
+  badgeId: string;
+  earnedAt: number;
 };
 
 export default function Index() {
@@ -69,6 +87,9 @@ export default function Index() {
   const [adminLevel, setAdminLevel] = useState<'ma1' | 'sa1' | null>(null);
   const [adminPromocode, setAdminPromocode] = useState('admin121114');
   const [adminSiteEditMode, setAdminSiteEditMode] = useState(false);
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [userBadges, setUserBadges] = useState<UserBadge[]>([]);
+  const [showEditorModal, setShowEditorModal] = useState(false);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -82,6 +103,8 @@ export default function Index() {
     const storedAdminPromocode = localStorage.getItem('adminPromocode');
     const storedMaintenanceMode = localStorage.getItem('maintenanceMode');
     const storedAdminSiteEditMode = localStorage.getItem('adminSiteEditMode');
+    const storedBadges = localStorage.getItem('badges');
+    const storedUserBadges = localStorage.getItem('userBadges');
     
     if (storedUserId && storedUsername) {
       setUserId(parseInt(storedUserId));
@@ -95,8 +118,22 @@ export default function Index() {
     setAdminLessonEditMode(storedAdminLessonEditMode === 'true');
     setAdminLevel(storedAdminLevel);
     setAdminPromocode(storedAdminPromocode || 'admin121114');
-    setMaintenanceMode(storedMaintenanceMode === 'true');
     setAdminSiteEditMode(storedAdminSiteEditMode === 'true');
+    
+    if (storedBadges) {
+      setBadges(JSON.parse(storedBadges));
+    } else {
+      const defaultBadges: Badge[] = [
+        { id: 'chat-active', name: 'Активный чаттер', icon: 'MessageSquare', background: 'bg-blue-500', condition: '10 сообщений' },
+        { id: 'lesson-lover', name: 'Любитель уроков', icon: 'Heart', background: 'bg-red-500', condition: 'Лайк уроку' }
+      ];
+      setBadges(defaultBadges);
+      localStorage.setItem('badges', JSON.stringify(defaultBadges));
+    }
+    
+    if (storedUserBadges) {
+      setUserBadges(JSON.parse(storedUserBadges));
+    }
     
     if (storedSchedule) {
       setSchedule(JSON.parse(storedSchedule));
@@ -209,6 +246,90 @@ export default function Index() {
     setIsAuthenticated(true);
     setShowAuthModal(false);
     setActiveSection('chat');
+  };
+
+  const handleMessageSent = () => {
+    if (!userId) return;
+    
+    const messageKey = `user_${userId}_messages`;
+    const currentCount = parseInt(localStorage.getItem(messageKey) || '0');
+    const newCount = currentCount + 1;
+    localStorage.setItem(messageKey, newCount.toString());
+    
+    if (newCount >= 10 && !userBadges.find(ub => ub.userId === userId && ub.badgeId === 'chat-active')) {
+      const newBadge: UserBadge = {
+        userId,
+        badgeId: 'chat-active',
+        earnedAt: Date.now()
+      };
+      const updated = [...userBadges, newBadge];
+      setUserBadges(updated);
+      localStorage.setItem('userBadges', JSON.stringify(updated));
+    }
+  };
+
+  const handleLessonLike = () => {
+    if (!userId) return;
+    
+    if (!userBadges.find(ub => ub.userId === userId && ub.badgeId === 'lesson-lover')) {
+      const newBadge: UserBadge = {
+        userId,
+        badgeId: 'lesson-lover',
+        earnedAt: Date.now()
+      };
+      const updated = [...userBadges, newBadge];
+      setUserBadges(updated);
+      localStorage.setItem('userBadges', JSON.stringify(updated));
+    }
+  };
+
+  const getUserBadgeIds = (uid: number): string[] => {
+    return userBadges.filter(ub => ub.userId === uid).map(ub => ub.badgeId);
+  };
+
+  const handleCreateNews = async (title: string, content: string) => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/1cfe69cf-3e6e-48a0-b368-c16c67f14a86', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content })
+      });
+
+      if (response.ok) {
+        await fetchNews();
+        setShowEditorModal(false);
+      }
+    } catch (err) {
+      console.error('Failed to create news:', err);
+    }
+  };
+
+  const handleCreateContact = async (name: string, phone: string, role: 'ученик' | 'админ' | 'учитель') => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/9023ff53-a964-4de8-959b-f938d884ff4a', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, role })
+      });
+
+      if (response.ok) {
+        await fetchContacts();
+        setShowEditorModal(false);
+      }
+    } catch (err) {
+      console.error('Failed to create contact:', err);
+    }
+  };
+
+  const handleCreateBadge = (badgeData: { name: string; icon: string; background: string; condition: string }) => {
+    const newBadge: Badge = {
+      id: `custom-${Date.now()}`,
+      ...badgeData
+    };
+    const updated = [...badges, newBadge];
+    setBadges(updated);
+    localStorage.setItem('badges', JSON.stringify(updated));
+    setShowEditorModal(false);
   };
 
   const handleLogout = () => {
@@ -559,6 +680,17 @@ export default function Index() {
                   <Icon name="Newspaper" size={20} className="mr-2" />
                   Читать новости
                 </Button>
+                {isAdmin && (
+                  <Button 
+                    size="lg" 
+                    variant="default"
+                    onClick={() => setShowEditorModal(true)}
+                    className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white hover:scale-105 transition-transform"
+                  >
+                    <Icon name="Edit" size={20} className="mr-2" />
+                    Редакция
+                  </Button>
+                )}
                 <Button 
                   size="lg" 
                   variant="default"
@@ -615,6 +747,9 @@ export default function Index() {
             adminChatMode={adminChatMode}
             adminAnonimMode={adminAnonimMode}
             adminPromocode={adminPromocode}
+            userBadges={getUserBadgeIds(userId)}
+            badges={badges}
+            onMessageSent={handleMessageSent}
           />
         )}
 
@@ -1072,8 +1207,30 @@ export default function Index() {
           lesson={selectedLesson} 
           onClose={() => setSelectedLesson(null)} 
           userId={userId}
+          isAdmin={isAdmin}
+          onUpdateHomework={(homework) => {
+            const updatedSchedule = schedule.map(day => ({
+              ...day,
+              lessons: day.lessons.map(lesson => 
+                lesson.number === selectedLesson.number && lesson.subject === selectedLesson.subject
+                  ? { ...lesson, homework }
+                  : lesson
+              )
+            }));
+            setSchedule(updatedSchedule);
+            localStorage.setItem('schedule', JSON.stringify(updatedSchedule));
+            setSelectedLesson({ ...selectedLesson, homework });
+            handleLessonLike();
+          }}
         />
       )}
+      <EditorModal
+        isOpen={showEditorModal}
+        onClose={() => setShowEditorModal(false)}
+        onCreateNews={handleCreateNews}
+        onCreateContact={handleCreateContact}
+        onCreateBadge={handleCreateBadge}
+      />
       <AdminConsole 
         isOpen={showAdminConsole} 
         onClose={() => setShowAdminConsole(false)} 
