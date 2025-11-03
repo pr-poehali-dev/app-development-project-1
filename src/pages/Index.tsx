@@ -68,6 +68,7 @@ export default function Index() {
   const [schedule, setSchedule] = useState<DaySchedule[]>([]);
   const [adminLevel, setAdminLevel] = useState<'ma1' | 'sa1' | null>(null);
   const [adminPromocode, setAdminPromocode] = useState('admin121114');
+  const [showAdminGiveModal, setShowAdminGiveModal] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [adminSiteEditMode, setAdminSiteEditMode] = useState(false);
 
@@ -306,6 +307,8 @@ export default function Index() {
       setAdminLessonEditMode(value);
       localStorage.setItem('adminLessonEditMode', value.toString());
       console.log(`✅ Admin lesson edit mode: ${value ? 'enabled' : 'disabled'}`);
+    } else if (mainCommand === '/adminGive') {
+      setShowAdminGiveModal(true);
     } else if (mainCommand === '/commands') {
       console.log('📋 Список всех команд:');
       console.log('/adminGive - выдать админку');
@@ -621,7 +624,6 @@ export default function Index() {
             onAdminStatusChange={handleAdminStatusChange}
             adminChatMode={adminChatMode}
             adminAnonimMode={adminAnonimMode}
-            adminPromocode={adminPromocode}
           />
         )}
 
@@ -1094,7 +1096,15 @@ export default function Index() {
           onSave={handleLessonSave}
         />
       )}
-
+      {showAdminGiveModal && (
+        <AdminGiveModal 
+          onClose={() => setShowAdminGiveModal(false)}
+          onConfirm={(level, targetUser) => {
+            console.log(`✅ Админ права выданы: ${targetUser} (${level})`);
+          }}
+          currentPromocode={adminPromocode}
+        />
+      )}
       {maintenanceMode && !isAdmin && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[200]">
           <div className="text-center space-y-4 p-8 bg-gradient-to-br from-orange-900/50 to-red-900/50 rounded-2xl border border-orange-500/30">
