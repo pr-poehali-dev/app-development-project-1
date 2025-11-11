@@ -8,6 +8,8 @@ import ChatRoom from '@/components/ChatRoom';
 import LessonModal from '@/components/LessonModal';
 import AdminConsole from '@/components/AdminConsole';
 import LessonEditModal from '@/components/LessonEditModal';
+import AdminGiveModal from '@/components/AdminGiveModal';
+import EditorModal from '@/components/EditorModal';
 
 type Student = {
   id: number;
@@ -32,11 +34,28 @@ type Lesson = {
   subject: string;
   startTime: string;
   endTime: string;
+  homework?: string;
+  likes?: number;
+  likedBy?: number[];
 };
 
 type DaySchedule = {
   day: string;
   lessons: Lesson[];
+};
+
+type Badge = {
+  id: string;
+  name: string;
+  icon: string;
+  background: string;
+  condition: string;
+};
+
+type UserBadge = {
+  userId: number;
+  badgeId: string;
+  earnedAt: number;
 };
 
 export default function Index() {
@@ -65,6 +84,12 @@ export default function Index() {
   const [adminLessonEditMode, setAdminLessonEditMode] = useState(false);
   const [editingLesson, setEditingLesson] = useState<{lesson: Lesson, day: string} | null>(null);
   const [schedule, setSchedule] = useState<DaySchedule[]>([]);
+  const [adminLevel, setAdminLevel] = useState<'ma1' | 'sa1' | null>(null);
+  const [adminPromocode, setAdminPromocode] = useState('admin121114');
+  const [adminSiteEditMode, setAdminSiteEditMode] = useState(false);
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [userBadges, setUserBadges] = useState<UserBadge[]>([]);
+  const [showEditorModal, setShowEditorModal] = useState(false);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -74,6 +99,12 @@ export default function Index() {
     const storedAdminAnonimMode = localStorage.getItem('adminAnonimMode');
     const storedAdminLessonEditMode = localStorage.getItem('adminLessonEditMode');
     const storedSchedule = localStorage.getItem('schedule');
+    const storedAdminLevel = localStorage.getItem('adminLevel') as 'ma1' | 'sa1' | null;
+    const storedAdminPromocode = localStorage.getItem('adminPromocode');
+    const storedMaintenanceMode = localStorage.getItem('maintenanceMode');
+    const storedAdminSiteEditMode = localStorage.getItem('adminSiteEditMode');
+    const storedBadges = localStorage.getItem('badges');
+    const storedUserBadges = localStorage.getItem('userBadges');
     
     if (storedUserId && storedUsername) {
       setUserId(parseInt(storedUserId));
@@ -85,6 +116,24 @@ export default function Index() {
     setAdminChatMode(storedAdminChatMode === 'true');
     setAdminAnonimMode(storedAdminAnonimMode === 'true');
     setAdminLessonEditMode(storedAdminLessonEditMode === 'true');
+    setAdminLevel(storedAdminLevel);
+    setAdminPromocode(storedAdminPromocode || 'admin121114');
+    setAdminSiteEditMode(storedAdminSiteEditMode === 'true');
+    
+    if (storedBadges) {
+      setBadges(JSON.parse(storedBadges));
+    } else {
+      const defaultBadges: Badge[] = [
+        { id: 'chat-active', name: 'Активный чаттер', icon: 'MessageSquare', background: 'bg-blue-500', condition: '10 сообщений' },
+        { id: 'lesson-lover', name: 'Любитель уроков', icon: 'Heart', background: 'bg-red-500', condition: 'Лайк уроку' }
+      ];
+      setBadges(defaultBadges);
+      localStorage.setItem('badges', JSON.stringify(defaultBadges));
+    }
+    
+    if (storedUserBadges) {
+      setUserBadges(JSON.parse(storedUserBadges));
+    }
     
     if (storedSchedule) {
       setSchedule(JSON.parse(storedSchedule));
@@ -199,6 +248,90 @@ export default function Index() {
     setActiveSection('chat');
   };
 
+  const handleMessageSent = () => {
+    if (!userId) return;
+    
+    const messageKey = `user_${userId}_messages`;
+    const currentCount = parseInt(localStorage.getItem(messageKey) || '0');
+    const newCount = currentCount + 1;
+    localStorage.setItem(messageKey, newCount.toString());
+    
+    if (newCount >= 10 && !userBadges.find(ub => ub.userId === userId && ub.badgeId === 'chat-active')) {
+      const newBadge: UserBadge = {
+        userId,
+        badgeId: 'chat-active',
+        earnedAt: Date.now()
+      };
+      const updated = [...userBadges, newBadge];
+      setUserBadges(updated);
+      localStorage.setItem('userBadges', JSON.stringify(updated));
+    }
+  };
+
+  const handleLessonLike = () => {
+    if (!userId) return;
+    
+    if (!userBadges.find(ub => ub.userId === userId && ub.badgeId === 'lesson-lover')) {
+      const newBadge: UserBadge = {
+        userId,
+        badgeId: 'lesson-lover',
+        earnedAt: Date.now()
+      };
+      const updated = [...userBadges, newBadge];
+      setUserBadges(updated);
+      localStorage.setItem('userBadges', JSON.stringify(updated));
+    }
+  };
+
+  const getUserBadgeIds = (uid: number): string[] => {
+    return userBadges.filter(ub => ub.userId === uid).map(ub => ub.badgeId);
+  };
+
+  const handleCreateNews = async (title: string, content: string) => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/1cfe69cf-3e6e-48a0-b368-c16c67f14a86', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content })
+      });
+
+      if (response.ok) {
+        await fetchNews();
+        setShowEditorModal(false);
+      }
+    } catch (err) {
+      console.error('Failed to create news:', err);
+    }
+  };
+
+  const handleCreateContact = async (name: string, phone: string, role: 'ученик' | 'админ' | 'учитель') => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/9023ff53-a964-4de8-959b-f938d884ff4a', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, role })
+      });
+
+      if (response.ok) {
+        await fetchContacts();
+        setShowEditorModal(false);
+      }
+    } catch (err) {
+      console.error('Failed to create contact:', err);
+    }
+  };
+
+  const handleCreateBadge = (badgeData: { name: string; icon: string; background: string; condition: string }) => {
+    const newBadge: Badge = {
+      id: `custom-${Date.now()}`,
+      ...badgeData
+    };
+    const updated = [...badges, newBadge];
+    setBadges(updated);
+    localStorage.setItem('badges', JSON.stringify(updated));
+    setShowEditorModal(false);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('userId');
     localStorage.removeItem('username');
@@ -264,12 +397,61 @@ export default function Index() {
         setAdminAnonimMode(false);
         localStorage.setItem('adminAnonimMode', 'false');
         console.log('✅ Default mode enabled');
+      } else if (parts[1] === 'remove') {
+        setIsAdmin(false);
+        setAdminLevel(null);
+        localStorage.setItem('isAdmin', 'false');
+        localStorage.removeItem('adminLevel');
+        console.log('✅ Админ права сняты');
+        setShowAdminConsole(false);
+      } else if (parts[1] === 'site') {
+        const value = parts[2] === 'true';
+        setAdminSiteEditMode(value);
+        localStorage.setItem('adminSiteEditMode', value.toString());
+        console.log(`✅ Site edit mode: ${value ? 'enabled' : 'disabled'}`);
+      } else if (parts[1] === 'sistem') {
+        const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+        console.log('👥 Зарегистрированные пользователи:');
+        users.forEach((user: any, index: number) => {
+          console.log(`${index + 1}. ${user.username} (ID: ${user.id})`);
+        });
       }
     } else if (mainCommand === '/adminLesson') {
       const value = parts[1] === 'true';
       setAdminLessonEditMode(value);
       localStorage.setItem('adminLessonEditMode', value.toString());
       console.log(`✅ Admin lesson edit mode: ${value ? 'enabled' : 'disabled'}`);
+    } else if (mainCommand === '/commands') {
+      console.log('📋 Список всех команд:');
+      console.log('/adminGive - выдать админку');
+      console.log('/admin remove - снять админку');
+      console.log('/adminChat true/false - админ сообщения');
+      console.log('/admin anonim/default - анонимный режим');
+      console.log('/adminLesson true/false - редактирование расписания');
+      console.log('/admin site true/false - редактирование сайта');
+      console.log('/promocode - узнать промокод');
+      console.log('/promocode edit [код] - изменить промокод');
+      console.log('/admin sistem - список пользователей');
+      console.log('/remove [ник] - удалить пользователь');
+    } else if (mainCommand === '/promocode') {
+      if (parts[1] === 'edit' && parts[2]) {
+        const newPromocode = parts.slice(2).join(' ');
+        setAdminPromocode(newPromocode);
+        localStorage.setItem('adminPromocode', newPromocode);
+        console.log(`✅ Промокод изменен на: ${newPromocode}`);
+      } else {
+        console.log(`🔑 Текущий промокод: ${adminPromocode}`);
+      }
+    } else if (mainCommand === '/remove' && parts[1]) {
+      const targetUsername = parts.slice(1).join(' ');
+      const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+      const filteredUsers = users.filter((u: any) => u.username !== targetUsername);
+      if (users.length !== filteredUsers.length) {
+        localStorage.setItem('registeredUsers', JSON.stringify(filteredUsers));
+        console.log(`✅ Пользователь ${targetUsername} удален`);
+      } else {
+        console.log(`❌ Пользователь ${targetUsername} не найден`);
+      }
     } else {
       console.log('❌ Unknown command:', command);
     }
@@ -498,6 +680,17 @@ export default function Index() {
                   <Icon name="Newspaper" size={20} className="mr-2" />
                   Читать новости
                 </Button>
+                {isAdmin && (
+                  <Button 
+                    size="lg" 
+                    variant="default"
+                    onClick={() => setShowEditorModal(true)}
+                    className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white hover:scale-105 transition-transform"
+                  >
+                    <Icon name="Edit" size={20} className="mr-2" />
+                    Редакция
+                  </Button>
+                )}
                 <Button 
                   size="lg" 
                   variant="default"
@@ -553,6 +746,10 @@ export default function Index() {
             onAdminStatusChange={handleAdminStatusChange}
             adminChatMode={adminChatMode}
             adminAnonimMode={adminAnonimMode}
+            adminPromocode={adminPromocode}
+            userBadges={getUserBadgeIds(userId)}
+            badges={badges}
+            onMessageSent={handleMessageSent}
           />
         )}
 
@@ -1010,8 +1207,30 @@ export default function Index() {
           lesson={selectedLesson} 
           onClose={() => setSelectedLesson(null)} 
           userId={userId}
+          isAdmin={isAdmin}
+          onUpdateHomework={(homework) => {
+            const updatedSchedule = schedule.map(day => ({
+              ...day,
+              lessons: day.lessons.map(lesson => 
+                lesson.number === selectedLesson.number && lesson.subject === selectedLesson.subject
+                  ? { ...lesson, homework }
+                  : lesson
+              )
+            }));
+            setSchedule(updatedSchedule);
+            localStorage.setItem('schedule', JSON.stringify(updatedSchedule));
+            setSelectedLesson({ ...selectedLesson, homework });
+            handleLessonLike();
+          }}
         />
       )}
+      <EditorModal
+        isOpen={showEditorModal}
+        onClose={() => setShowEditorModal(false)}
+        onCreateNews={handleCreateNews}
+        onCreateContact={handleCreateContact}
+        onCreateBadge={handleCreateBadge}
+      />
       <AdminConsole 
         isOpen={showAdminConsole} 
         onClose={() => setShowAdminConsole(false)} 
@@ -1024,6 +1243,16 @@ export default function Index() {
           onClose={() => setEditingLesson(null)}
           onSave={handleLessonSave}
         />
+      )}
+
+      {maintenanceMode && !isAdmin && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[200]">
+          <div className="text-center space-y-4 p-8 bg-gradient-to-br from-orange-900/50 to-red-900/50 rounded-2xl border border-orange-500/30">
+            <Icon name="AlertTriangle" size={48} className="text-orange-400 mx-auto" />
+            <h2 className="text-2xl font-bold text-white">Технические работы</h2>
+            <p className="text-gray-300">Внимание, ведутся работы. Приходите позже.</p>
+          </div>
+        </div>
       )}
     </div>
   );

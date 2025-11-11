@@ -125,11 +125,11 @@ export default function AdminGiveModal({ onClose, onConfirm, currentPromocode }:
                   setVerificationCode(e.target.value);
                   setError('');
                 }}
-                placeholder="admincomplession.1"
+                placeholder="Введите секретный код"
                 className="bg-white/5 border-white/10"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Требуется код для выдачи прав старшего администратора
+                Требуется секретный код для выдачи прав старшего администратора
               </p>
             </div>
           )}

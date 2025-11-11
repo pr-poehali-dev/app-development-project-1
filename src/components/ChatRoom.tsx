@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Icon from '@/components/ui/icon';
+import AdminGiveModal from '@/components/AdminGiveModal';
 
 const CHAT_URL = 'https://functions.poehali.dev/a9200a7a-4ac5-47b0-b48a-aa315785eb3c';
 
@@ -16,6 +17,14 @@ type Message = {
   isAdmin: boolean;
 };
 
+type Badge = {
+  id: string;
+  name: string;
+  icon: string;
+  background: string;
+  condition: string;
+};
+
 type ChatRoomProps = {
   userId: number;
   username: string;
@@ -24,9 +33,13 @@ type ChatRoomProps = {
   onAdminStatusChange: (isAdmin: boolean) => void;
   adminChatMode?: boolean;
   adminAnonimMode?: boolean;
+  adminPromocode?: string;
+  userBadges?: string[];
+  badges?: Badge[];
+  onMessageSent?: () => void;
 };
 
-export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminStatusChange, adminChatMode = false, adminAnonimMode = false }: ChatRoomProps) {
+export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminStatusChange, adminChatMode = false, adminAnonimMode = false, adminPromocode = 'admin121114', userBadges = [], badges = [], onMessageSent }: ChatRoomProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,6 +48,7 @@ export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminS
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
+  const [showAdminGiveModal, setShowAdminGiveModal] = useState(false);
 
   const fetchMessages = async () => {
     try {
@@ -68,6 +82,12 @@ export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminS
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
 
+    if (inputMessage.trim() === '/adminGive' && isAdmin) {
+      setShowAdminGiveModal(true);
+      setInputMessage('');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
@@ -100,6 +120,7 @@ export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminS
 
       setInputMessage('');
       await fetchMessages();
+      onMessageSent?.();
     } catch (err) {
       setError('Ошибка подключения');
     } finally {
@@ -168,6 +189,7 @@ export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminS
   };
 
   return (
+    <>
     <div className="max-w-4xl mx-auto animate-fade-in">
       <Card className="bg-card/50 backdrop-blur-sm border-border/50">
         <CardContent className="p-6 space-y-4">
@@ -217,10 +239,27 @@ export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminS
                         }`}
                       >
                         {!isOwn && (
-                          <p className="text-xs font-semibold mb-1 opacity-80">
-                            {msg.username}
-                            {msg.isAdmin && ' 👑'}
-                          </p>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <p className="text-xs font-semibold opacity-80">
+                              {msg.username}
+                            </p>
+                            {msg.isAdmin && <span>👑</span>}
+                            {userBadges.includes('chat-active') && (
+                              <div className="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-blue-500 text-white">
+                                <Icon name="MessageSquare" size={10} />
+                              </div>
+                            )}
+                            {userBadges.includes('lesson-lover') && (
+                              <div className="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-red-500 text-white">
+                                <Icon name="Heart" size={10} />
+                              </div>
+                            )}
+                            {badges.filter(b => userBadges.includes(b.id) && b.id !== 'chat-active' && b.id !== 'lesson-lover').map(badge => (
+                              <div key={badge.id} className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded ${badge.background} text-white`}>
+                                <Icon name={badge.icon as any} size={10} />
+                              </div>
+                            ))}
+                          </div>
                         )}
                         
                         {isEditing ? (
@@ -304,5 +343,15 @@ export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminS
         </CardContent>
       </Card>
     </div>
+    {showAdminGiveModal && (
+      <AdminGiveModal 
+        onClose={() => setShowAdminGiveModal(false)}
+        onConfirm={(level, targetUser) => {
+          console.log(`✅ Админ права выданы: ${targetUser} (${level})`);
+        }}
+        currentPromocode={adminPromocode}
+      />
+    )}
+  </>
   );
 }
