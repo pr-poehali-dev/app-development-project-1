@@ -8,17 +8,12 @@ type Lesson = {
   subject: string;
   startTime: string;
   endTime: string;
-  homework?: string;
-  likes?: number;
-  likedBy?: number[];
 };
 
 type LessonModalProps = {
   lesson: Lesson | null;
   onClose: () => void;
   userId: number | null;
-  isAdmin?: boolean;
-  onUpdateHomework?: (homework: string) => void;
 };
 
 const CLASSROOM_MAP: Record<string, string> = {
@@ -36,13 +31,11 @@ const CLASSROOM_MAP: Record<string, string> = {
   'Биология': '109'
 };
 
-export default function LessonModal({ lesson, onClose, userId, isAdmin, onUpdateHomework }: LessonModalProps) {
+export default function LessonModal({ lesson, onClose, userId }: LessonModalProps) {
   const [likes, setLikes] = useState<number>(0);
   const [hasLiked, setHasLiked] = useState<boolean>(false);
   const [timeStatus, setTimeStatus] = useState<string>('');
   const [isLessonActive, setIsLessonActive] = useState<boolean>(false);
-  const [editingHomework, setEditingHomework] = useState<boolean>(false);
-  const [homeworkText, setHomeworkText] = useState<string>('');
 
   useEffect(() => {
     if (!lesson) return;
@@ -86,8 +79,6 @@ export default function LessonModal({ lesson, onClose, userId, isAdmin, onUpdate
   useEffect(() => {
     if (!lesson) return;
     fetchLikes();
-    setHomeworkText(lesson.homework || '');
-    setEditingHomework(false);
   }, [lesson]);
 
   const fetchLikes = async () => {
@@ -182,111 +173,6 @@ export default function LessonModal({ lesson, onClose, userId, isAdmin, onUpdate
                 </Button>
               </div>
             </div>
-
-            {lesson.homework && (
-              <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
-                <div className="flex items-start gap-2 mb-2">
-                  <Icon name="BookOpen" size={20} className="text-blue-500 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">Домашнее задание</p>
-                    {editingHomework ? (
-                      <div className="space-y-2">
-                        <textarea
-                          value={homeworkText}
-                          onChange={(e) => setHomeworkText(e.target.value)}
-                          className="w-full p-2 rounded border bg-background text-foreground text-sm min-h-[80px]"
-                          placeholder="Введите домашнее задание"
-                        />
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              onUpdateHomework?.(homeworkText);
-                              setEditingHomework(false);
-                            }}
-                          >
-                            Сохранить
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setHomeworkText(lesson.homework || '');
-                              setEditingHomework(false);
-                            }}
-                          >
-                            Отмена
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-foreground whitespace-pre-wrap">{lesson.homework}</p>
-                    )}
-                  </div>
-                  {isAdmin && !editingHomework && (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => setEditingHomework(true)}
-                      className="h-8 w-8"
-                    >
-                      <Icon name="Pencil" size={16} />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {isAdmin && !lesson.homework && (
-              <div className="p-4 rounded-lg bg-muted/30 border border-dashed border-muted-foreground/30">
-                <div className="flex items-start gap-2">
-                  <Icon name="BookOpen" size={20} className="text-muted-foreground mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Домашнее задание</p>
-                    {editingHomework ? (
-                      <div className="space-y-2">
-                        <textarea
-                          value={homeworkText}
-                          onChange={(e) => setHomeworkText(e.target.value)}
-                          className="w-full p-2 rounded border bg-background text-foreground text-sm min-h-[80px]"
-                          placeholder="Введите домашнее задание"
-                        />
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              onUpdateHomework?.(homeworkText);
-                              setEditingHomework(false);
-                            }}
-                          >
-                            Сохранить
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setHomeworkText('');
-                              setEditingHomework(false);
-                            }}
-                          >
-                            Отмена
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditingHomework(true)}
-                      >
-                        <Icon name="Plus" size={16} className="mr-2" />
-                        Добавить задание
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           <div className="mt-6 pt-4 border-t border-border">

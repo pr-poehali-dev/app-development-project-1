@@ -17,14 +17,6 @@ type Message = {
   isAdmin: boolean;
 };
 
-type Badge = {
-  id: string;
-  name: string;
-  icon: string;
-  background: string;
-  condition: string;
-};
-
 type ChatRoomProps = {
   userId: number;
   username: string;
@@ -34,12 +26,9 @@ type ChatRoomProps = {
   adminChatMode?: boolean;
   adminAnonimMode?: boolean;
   adminPromocode?: string;
-  userBadges?: string[];
-  badges?: Badge[];
-  onMessageSent?: () => void;
 };
 
-export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminStatusChange, adminChatMode = false, adminAnonimMode = false, adminPromocode = 'admin121114', userBadges = [], badges = [], onMessageSent }: ChatRoomProps) {
+export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminStatusChange, adminChatMode = false, adminAnonimMode = false, adminPromocode = 'admin121114' }: ChatRoomProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -120,7 +109,6 @@ export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminS
 
       setInputMessage('');
       await fetchMessages();
-      onMessageSent?.();
     } catch (err) {
       setError('Ошибка подключения');
     } finally {
@@ -239,27 +227,10 @@ export default function ChatRoom({ userId, username, onLogout, isAdmin, onAdminS
                         }`}
                       >
                         {!isOwn && (
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <p className="text-xs font-semibold opacity-80">
-                              {msg.username}
-                            </p>
-                            {msg.isAdmin && <span>👑</span>}
-                            {userBadges.includes('chat-active') && (
-                              <div className="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-blue-500 text-white">
-                                <Icon name="MessageSquare" size={10} />
-                              </div>
-                            )}
-                            {userBadges.includes('lesson-lover') && (
-                              <div className="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-red-500 text-white">
-                                <Icon name="Heart" size={10} />
-                              </div>
-                            )}
-                            {badges.filter(b => userBadges.includes(b.id) && b.id !== 'chat-active' && b.id !== 'lesson-lover').map(badge => (
-                              <div key={badge.id} className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded ${badge.background} text-white`}>
-                                <Icon name={badge.icon as any} size={10} />
-                              </div>
-                            ))}
-                          </div>
+                          <p className="text-xs font-semibold mb-1 opacity-80">
+                            {msg.username}
+                            {msg.isAdmin && ' 👑'}
+                          </p>
                         )}
                         
                         {isEditing ? (
